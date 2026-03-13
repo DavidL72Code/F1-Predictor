@@ -1,0 +1,6 @@
+venv/
+.DS_Store # Mac junk files
+__pycache__/ # Python cache files
+*.pyc # compiled Python files
+data/raw/ # raw data files are too big
+.ipynb_checkpoints/ # Jupyter autosave files
