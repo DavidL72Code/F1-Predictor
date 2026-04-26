@@ -1,0 +1,219 @@
+{
+  "generated_from": {
+    "search_results": "data/processed/feature_search_all_methods.json",
+    "test_configs": [
+      [
+        2022,
+        2021
+      ],
+      [
+        2023,
+        2022
+      ],
+      [
+        2024,
+        2023
+      ]
+    ]
+  },
+  "purpose": "Balanced feature-set guidance for keeping enough signal to avoid underfitting without leaning too hard into narrow metric-specific winners.",
+  "criteria": {
+    "must_keep": "Appears in at least 3 of the 4 best-overall metric winners.",
+    "maybe_keep": "Appears in exactly 2 best-overall metric winners, or appears in 1 best-overall metric winner but still shows strong support across per-method best entries.",
+    "probably_drop": "Appears in only 1 best-overall metric winner and has limited support across per-method best entries."
+  },
+  "must_keep": [
+    {
+      "feature": "grid",
+      "overall_metric_hits": 4,
+      "method_best_hits": 16,
+      "best_overall_metrics": [
+        "winner_acc",
+        "podium_acc",
+        "spearman",
+        "mae"
+      ],
+      "reason": "Foundational pre-race signal that shows up in every best-overall objective and every per-method best winner."
+    },
+    {
+      "feature": "quali_pos",
+      "overall_metric_hits": 4,
+      "method_best_hits": 16,
+      "best_overall_metrics": [
+        "winner_acc",
+        "podium_acc",
+        "spearman",
+        "mae"
+      ],
+      "reason": "The other core starting-position feature; just as stable as grid across all objectives and methods."
+    },
+    {
+      "feature": "driver_form",
+      "overall_metric_hits": 3,
+      "method_best_hits": 12,
+      "best_overall_metrics": [
+        "winner_acc",
+        "spearman",
+        "mae"
+      ],
+      "reason": "Recurring cross-objective driver-strength signal that helps both winner picking and full-order quality."
+    },
+    {
+      "feature": "constructor_momentum",
+      "overall_metric_hits": 3,
+      "method_best_hits": 9,
+      "best_overall_metrics": [
+        "winner_acc",
+        "podium_acc",
+        "spearman"
+      ],
+      "reason": "Shows up repeatedly as a stable team-trend feature without being tied to only one metric."
+    },
+    {
+      "feature": "team_encoded",
+      "overall_metric_hits": 3,
+      "method_best_hits": 8,
+      "best_overall_metrics": [
+        "winner_acc",
+        "spearman",
+        "mae"
+      ],
+      "reason": "Strong recurring team-identity signal across multiple objectives, though it still deserves monitoring for shift risk."
+    }
+  ],
+  "maybe_keep": [
+    {
+      "feature": "grid_penalty",
+      "overall_metric_hits": 2,
+      "method_best_hits": 4,
+      "best_overall_metrics": [
+        "winner_acc",
+        "podium_acc"
+      ],
+      "reason": "Useful for front-of-field race outcomes, but not stable enough across every objective to be automatic."
+    },
+    {
+      "feature": "team_win_rate",
+      "overall_metric_hits": 2,
+      "method_best_hits": 9,
+      "best_overall_metrics": [
+        "spearman",
+        "mae"
+      ],
+      "reason": "Strong support for order-quality metrics and repeatedly useful in per-method winners."
+    },
+    {
+      "feature": "circuit_wins_before",
+      "overall_metric_hits": 2,
+      "method_best_hits": 7,
+      "best_overall_metrics": [
+        "spearman",
+        "mae"
+      ],
+      "reason": "Helpful circuit-history signal, but more objective-specific than the core features."
+    },
+    {
+      "feature": "circuit_avg_finish",
+      "overall_metric_hits": 2,
+      "method_best_hits": 9,
+      "best_overall_metrics": [
+        "winner_acc",
+        "podium_acc"
+      ],
+      "reason": "Consistent circuit-context feature, especially for outcome-focused metrics."
+    },
+    {
+      "feature": "constructor_rank_norm",
+      "overall_metric_hits": 2,
+      "method_best_hits": 10,
+      "best_overall_metrics": [
+        "podium_acc",
+        "spearman"
+      ],
+      "reason": "Stable team-strength signal for ordering metrics, with solid support across method-specific winners."
+    },
+    {
+      "feature": "starting_compound",
+      "overall_metric_hits": 2,
+      "method_best_hits": 6,
+      "best_overall_metrics": [
+        "winner_acc",
+        "mae"
+      ],
+      "reason": "Useful when tyre strategy matters, but less universal than the main performance signals."
+    },
+    {
+      "feature": "wet_race",
+      "overall_metric_hits": 2,
+      "method_best_hits": 7,
+      "best_overall_metrics": [
+        "podium_acc",
+        "mae"
+      ],
+      "reason": "Contextual race-condition feature that can help, but likely depends on limited event patterns."
+    },
+    {
+      "feature": "track_temp",
+      "overall_metric_hits": 2,
+      "method_best_hits": 6,
+      "best_overall_metrics": [
+        "podium_acc",
+        "spearman"
+      ],
+      "reason": "Potentially useful environmental context, but more situational than the stable competitive signals."
+    },
+    {
+      "feature": "circuit_encoded",
+      "overall_metric_hits": 2,
+      "method_best_hits": 6,
+      "best_overall_metrics": [
+        "spearman",
+        "mae"
+      ],
+      "reason": "Helps capture circuit identity, though it can also increase memorization risk if overused."
+    },
+    {
+      "feature": "circuit_overperformance",
+      "overall_metric_hits": 1,
+      "method_best_hits": 6,
+      "best_overall_metrics": [
+        "winner_acc"
+      ],
+      "reason": "Mostly winner-focused, but recurring enough in per-method best entries to keep in the discussion."
+    },
+    {
+      "feature": "driver_finish_rate",
+      "overall_metric_hits": 1,
+      "method_best_hits": 7,
+      "best_overall_metrics": [
+        "mae"
+      ],
+      "reason": "More useful for broad position quality than for winner picking, but supported often enough to avoid a hard drop."
+    }
+  ],
+  "probably_drop": [
+    {
+      "feature": "quali_gap",
+      "overall_metric_hits": 1,
+      "method_best_hits": 3,
+      "best_overall_metrics": [
+        "winner_acc"
+      ],
+      "reason": "Looks helpful for a narrow winner-focused objective, but shows limited cross-objective and cross-method stability."
+    },
+    {
+      "feature": "circuit_type",
+      "overall_metric_hits": 1,
+      "method_best_hits": 3,
+      "best_overall_metrics": [
+        "mae"
+      ],
+      "reason": "Only shows up for one best-overall objective and has limited support elsewhere."
+    }
+  ],
+  "notes": [
+    "These buckets are for building a balanced general-purpose feature set, not for maximizing a single metric at all costs.",
+    "A feature in probably_drop is not useless; it just has the weakest evidence for broad, stable generalization in the current search output.",
+    "If you later build metric-specific models, features like quali_gap or circuit_overperformance may deserve promotion for winner-only optimization."
+  ]
+}
