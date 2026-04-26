@@ -1,6 +1,27 @@
+# Python virtual environments
 venv/
-.DS_Store # Mac junk files
-__pycache__/ # Python cache files
-*.pyc # compiled Python files
-data/raw/ # raw data files are too big
-.ipynb_checkpoints/ # Jupyter autosave files
+
+# macOS metadata
+.DS_Store
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Notebook autosaves
+.ipynb_checkpoints/
+
+# Editor workspace files
+*.code-workspace
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/build/
+.vercel/
+
+# Local FastF1 cache
+data/raw/fastf1_http_cache.sqlite
+data/raw/**/*.ff1pkl
+
+# Large local experiment artifact
+data/processed/feature_search_all_methods.json

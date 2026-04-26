@@ -1,0 +1,137 @@
+{
+  "test_configs": [
+    [
+      2022,
+      2021
+    ],
+    [
+      2023,
+      2022
+    ],
+    [
+      2024,
+      2023
+    ]
+  ],
+  "best_overall_by_metric": {
+    "winner_acc": {
+      "method": "ensemble_winner",
+      "metric": "winner_acc",
+      "value": 70.833,
+      "features": [
+        "grid",
+        "quali_pos",
+        "quali_gap",
+        "grid_penalty",
+        "driver_form",
+        "circuit_avg_finish",
+        "circuit_overperformance",
+        "constructor_momentum",
+        "starting_compound",
+        "team_encoded"
+      ],
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "all_metrics": {
+        "winner_acc": 70.833,
+        "podium_acc": 23.611,
+        "spearman": 0.67,
+        "mae": 3.236,
+        "ndcg": 0.968,
+        "within_3": 57.866
+      }
+    },
+    "podium_acc": {
+      "method": "ensemble_position",
+      "metric": "podium_acc",
+      "value": 33.586,
+      "features": [
+        "grid",
+        "quali_pos",
+        "grid_penalty",
+        "circuit_avg_finish",
+        "constructor_rank_norm",
+        "constructor_momentum",
+        "wet_race",
+        "track_temp"
+      ],
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "all_metrics": {
+        "winner_acc": 53.157,
+        "podium_acc": 33.586,
+        "spearman": 0.676,
+        "mae": 3.252,
+        "ndcg": 0.972,
+        "within_3": 57.986
+      }
+    },
+    "spearman": {
+      "method": "ensemble_position",
+      "metric": "spearman",
+      "value": 0.684,
+      "features": [
+        "grid",
+        "quali_pos",
+        "driver_form",
+        "team_win_rate",
+        "circuit_wins_before",
+        "constructor_rank_norm",
+        "constructor_momentum",
+        "track_temp",
+        "team_encoded",
+        "circuit_encoded"
+      ],
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "all_metrics": {
+        "winner_acc": 48.99,
+        "podium_acc": 22.096,
+        "spearman": 0.684,
+        "mae": 3.164,
+        "ndcg": 0.97,
+        "within_3": 59.482
+      }
+    },
+    "mae": {
+      "method": "ensemble_winner",
+      "metric": "mae",
+      "value": 3.134,
+      "features": [
+        "grid",
+        "quali_pos",
+        "driver_form",
+        "team_win_rate",
+        "circuit_wins_before",
+        "driver_finish_rate",
+        "starting_compound",
+        "circuit_type",
+        "wet_race",
+        "team_encoded",
+        "circuit_encoded"
+      ],
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "all_metrics": {
+        "winner_acc": 60.606,
+        "podium_acc": 20.581,
+        "spearman": 0.676,
+        "mae": 3.134,
+        "ndcg": 0.973,
+        "within_3": 59.603
+      }
+    }
+  }
+}
