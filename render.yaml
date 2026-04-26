@@ -2,6 +2,9 @@ services:
   - type: web
     name: f1-strategy-predictor-api
     runtime: python
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
     buildCommand: pip install -r requirements-render.txt
     startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health

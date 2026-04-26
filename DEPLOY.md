@@ -3,6 +3,7 @@
 ## Backend on Render
 
 - Render can read `render.yaml` directly from the repo root.
+- The Render config pins Python to `3.11.11`, which is a safer target for the current scientific stack (`numpy`, `scipy`, `scikit-learn`, `xgboost`).
 - The backend installs only the runtime packages from `requirements-render.txt`.
 - Start command: `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`
 - Optional environment variables:
