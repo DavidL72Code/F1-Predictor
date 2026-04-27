@@ -44,6 +44,13 @@ const readErrorMessage = async (response, fallback) => {
   }
 }
 
+const expectArray = (value, label) => {
+  if (!Array.isArray(value)) {
+    throw new Error(`${label} returned an unexpected response shape.`)
+  }
+  return value
+}
+
 const RaceCarLoader = () => {
   const pathRef = useRef(null)
   const frameRef = useRef(null)
@@ -694,11 +701,12 @@ export default function App() {
         return r.json()
       })
       .then((data) => {
-        setRaces(data)
-        const ys = [...new Set(data.map((r) => r.year))].sort((a, b) => b - a)
+        const raceList = expectArray(data, "Race list")
+        setRaces(raceList)
+        const ys = [...new Set(raceList.map((r) => r.year))].sort((a, b) => b - a)
         setYears(ys)
         if (ys.length > 0) {
-          const rs = data.filter((r) => r.year === ys[0]).sort((a, b) => a.round - b.round)
+          const rs = raceList.filter((r) => r.year === ys[0]).sort((a, b) => a.round - b.round)
           setYear(ys[0])
           setRaceOptions(rs)
           setSelectedRaceKey(rs[0]?.key || "")
@@ -730,6 +738,7 @@ export default function App() {
   }, [selectedProfile])
 
   useEffect(() => {
+    if (!Array.isArray(races)) return
     const rs = races.filter((r) => r.year === selectedYear).sort((a, b) => a.round - b.round)
     setRaceOptions(rs)
     setSelectedRaceKey(rs[0]?.key || "")
