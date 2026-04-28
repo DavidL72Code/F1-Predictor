@@ -26,6 +26,7 @@ DATA = os.path.join(ROOT, "data")
 MODELS = os.path.join(ROOT, "models")
 FEATURE_SEARCH_RESULTS = os.path.join(DATA, "processed", "feature_search_results.json")
 FEATURE_SEARCH_PROFILE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_summary.json")
+FEATURE_SEARCH_PROFILE_LIVE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_live_summary.json")
 DEFAULT_PROFILE = "winner"
 
 PROFILE_METADATA = {
@@ -308,17 +309,23 @@ def load_best_feature_search_result():
 def load_feature_profiles():
     profiles = {}
     search_all_methods = None
+    search_source = None
 
-    if os.path.exists(FEATURE_SEARCH_PROFILE_SUMMARY):
+    for candidate_path in [FEATURE_SEARCH_PROFILE_LIVE_SUMMARY, FEATURE_SEARCH_PROFILE_SUMMARY]:
+        if not os.path.exists(candidate_path):
+            continue
         try:
-            with open(FEATURE_SEARCH_PROFILE_SUMMARY) as f:
+            with open(candidate_path) as f:
                 search_all_methods = json.load(f)
+            search_source = os.path.basename(candidate_path)
+            break
         except (OSError, json.JSONDecodeError) as exc:
-            print(f"Unable to load feature search profile summary: {exc}")
+            print(f"Unable to load feature search profile summary from {candidate_path}: {exc}")
 
     if search_all_methods:
         best_overall = search_all_methods.get("best_overall_by_metric", {})
         test_configs = [tuple(config) for config in search_all_methods.get("test_configs", [])]
+        stored_benchmarks = search_all_methods.get("profile_benchmarks", {})
 
         for profile_key, meta in PROFILE_METADATA.items():
             objective_metric = meta["objective_metric"]
@@ -346,7 +353,8 @@ def load_feature_profiles():
                 "selected_method": str(best.get("method", "")),
                 "all_metrics": best.get("all_metrics", {}),
                 "test_configs": test_configs,
-                "source": "feature_search_profile_summary.json",
+                "source": search_source or "feature_search_profile_summary.json",
+                "stored_benchmark": stored_benchmarks.get(profile_key),
             }
 
     winner_fallback = load_best_feature_search_result()
@@ -585,7 +593,7 @@ def compute_live_feature_search_benchmark(profile_runtime):
 print("Loading model artifacts...")
 PROFILE_RUNTIMES = build_profile_runtimes()
 for runtime in PROFILE_RUNTIMES.values():
-    runtime["feature_search_benchmark"] = compute_live_feature_search_benchmark(runtime)
+    runtime["feature_search_benchmark"] = runtime.get("stored_benchmark") or compute_live_feature_search_benchmark(runtime)
 
 
 def get_profile_runtime(profile):
