@@ -855,6 +855,11 @@ def root():
     }
 
 
+@app.head("/health")
+def health_head():
+    return {}
+
+
 @app.get("/health")
 def health():
     return {
