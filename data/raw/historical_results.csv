@@ -4741,3 +4741,47 @@ year,round,circuit,driver,team,grid,position,won,points,laps,status
 2026,2,shanghai,norris,mclaren,6,20,0,0.0,0,Did not start
 2026,2,shanghai,bortoleto,audi,16,21,0,0.0,0,Did not start
 2026,2,shanghai,albon,williams,22,22,0,0.0,0,Did not start
+2026,3,suzuka,antonelli,mercedes,1,1,1,25.0,53,Finished
+2026,3,suzuka,piastri,mclaren,3,2,0,18.0,53,Finished
+2026,3,suzuka,leclerc,ferrari,4,3,0,15.0,53,Finished
+2026,3,suzuka,russell,mercedes,2,4,0,12.0,53,Finished
+2026,3,suzuka,norris,mclaren,5,5,0,10.0,53,Finished
+2026,3,suzuka,hamilton,ferrari,6,6,0,8.0,53,Finished
+2026,3,suzuka,gasly,alpine,7,7,0,6.0,53,Finished
+2026,3,suzuka,max_verstappen,red_bull,11,8,0,4.0,53,Finished
+2026,3,suzuka,lawson,rb,14,9,0,2.0,53,Finished
+2026,3,suzuka,ocon,haas,12,10,0,1.0,53,Finished
+2026,3,suzuka,hulkenberg,audi,13,11,0,0.0,53,Finished
+2026,3,suzuka,hadjar,red_bull,8,12,0,0.0,53,Finished
+2026,3,suzuka,bortoleto,audi,9,13,0,0.0,53,Finished
+2026,3,suzuka,arvid_lindblad,rb,10,14,0,0.0,53,Finished
+2026,3,suzuka,sainz,williams,16,15,0,0.0,53,Finished
+2026,3,suzuka,colapinto,alpine,15,16,0,0.0,53,Finished
+2026,3,suzuka,perez,cadillac,19,17,0,0.0,53,Finished
+2026,3,suzuka,alonso,aston_martin,21,18,0,0.0,52,Lapped
+2026,3,suzuka,bottas,cadillac,20,19,0,0.0,52,Lapped
+2026,3,suzuka,albon,williams,17,20,0,0.0,51,Lapped
+2026,3,suzuka,stroll,aston_martin,22,21,0,0.0,30,Retired
+2026,3,suzuka,bearman,haas,18,22,0,0.0,20,Retired
+2026,4,miami,antonelli,mercedes,1,1,1,25.0,57,Finished
+2026,4,miami,norris,mclaren,4,2,0,18.0,57,Finished
+2026,4,miami,piastri,mclaren,7,3,0,15.0,57,Finished
+2026,4,miami,russell,mercedes,5,4,0,12.0,57,Finished
+2026,4,miami,max_verstappen,red_bull,2,5,0,10.0,57,Finished
+2026,4,miami,hamilton,ferrari,6,6,0,8.0,57,Finished
+2026,4,miami,colapinto,alpine,8,7,0,6.0,57,Finished
+2026,4,miami,leclerc,ferrari,3,8,0,4.0,57,Finished
+2026,4,miami,sainz,williams,13,9,0,2.0,57,Finished
+2026,4,miami,albon,williams,15,10,0,1.0,57,Finished
+2026,4,miami,bearman,haas,12,11,0,0.0,56,Lapped
+2026,4,miami,bortoleto,audi,21,12,0,0.0,56,Lapped
+2026,4,miami,ocon,haas,14,13,0,0.0,56,Lapped
+2026,4,miami,arvid_lindblad,rb,16,14,0,0.0,56,Lapped
+2026,4,miami,alonso,aston_martin,17,15,0,0.0,56,Lapped
+2026,4,miami,perez,cadillac,20,16,0,0.0,56,Lapped
+2026,4,miami,stroll,aston_martin,18,17,0,0.0,56,Lapped
+2026,4,miami,bottas,cadillac,19,18,0,0.0,55,Lapped
+2026,4,miami,hulkenberg,audi,10,19,0,0.0,7,Retired
+2026,4,miami,lawson,rb,11,20,0,0.0,6,Retired
+2026,4,miami,gasly,alpine,9,21,0,0.0,4,Retired
+2026,4,miami,hadjar,red_bull,22,22,0,0.0,4,Retired
