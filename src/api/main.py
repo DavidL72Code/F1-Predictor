@@ -28,6 +28,9 @@ FEATURE_SEARCH_RESULTS = os.path.join(DATA, "processed", "feature_search_results
 FEATURE_SEARCH_PROFILE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_summary.json")
 FEATURE_SEARCH_PROFILE_LIVE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_live_summary.json")
 DEFAULT_PROFILE = "winner"
+CURRENT_SEASON_WEIGHT = 10.0
+PREVIOUS_SEASON_WEIGHT = 3.0
+TWO_SEASONS_BACK_WEIGHT = 1.0
 
 PROFILE_METADATA = {
     "winner": {
@@ -394,17 +397,23 @@ def load_feature_profiles():
 
 
 def train_profile_xgb(df_clean_profile, features):
-    model = XGBRegressor(
-        colsample_bytree=0.7,
-        learning_rate=0.05,
-        max_depth=3,
-        n_estimators=100,
-        subsample=0.9,
-        random_state=42,
-        eval_metric="mae",
-    )
+    model = build_xgb_model()
     model.fit(df_clean_profile[features], df_clean_profile[TARGET])
     return model
+
+
+def build_xgb_model(**overrides):
+    params = {
+        "colsample_bytree": 0.7,
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "n_estimators": 100,
+        "subsample": 0.9,
+        "random_state": 42,
+        "eval_metric": "mae",
+    }
+    params.update(overrides)
+    return XGBRegressor(**params)
 
 
 def build_profile_runtimes():
@@ -633,6 +642,35 @@ def get_future_alpha(profile_runtime):
     )
 
 
+def latest_completed_season(df_clean_profile):
+    return int(df_clean_profile["year"].max())
+
+
+def current_season_weights(train_df, current_season):
+    weights = pd.Series(1.0, index=train_df.index)
+    weights.loc[train_df["year"] == current_season] = CURRENT_SEASON_WEIGHT
+    weights.loc[train_df["year"] == current_season - 1] = PREVIOUS_SEASON_WEIGHT
+    weights.loc[train_df["year"] == current_season - 2] = TWO_SEASONS_BACK_WEIGHT
+    return weights
+
+
+def training_rows_for_prediction(df_clean_profile, year, round_number=None):
+    latest_season = latest_completed_season(df_clean_profile)
+    if int(year) == latest_season:
+        before_year = df_clean_profile["year"] < year
+        if round_number is None:
+            before_prediction = before_year | (df_clean_profile["year"] == year)
+        else:
+            before_prediction = before_year | (
+                (df_clean_profile["year"] == year) & (df_clean_profile["round"] < round_number)
+            )
+        train_df = df_clean_profile[before_prediction].copy()
+        return train_df, current_season_weights(train_df, latest_season)
+
+    train_df = df_clean_profile[df_clean_profile["year"] < year].copy()
+    return train_df, pd.Series(1.0, index=train_df.index)
+
+
 def get_constructor_rank(team, profile_runtime):
     df_clean_profile = profile_runtime["df_clean"]
     team_data = df_clean_profile[df_clean_profile["team"] == team]
@@ -713,61 +751,59 @@ def predict_historical(year, round_number, profile=DEFAULT_PROFILE):
     profile_runtime = get_profile_runtime(profile)
     df_clean_profile = profile_runtime["df_clean"]
     features = profile_runtime["features"]
-    profile_xgb = profile_runtime["xgb_model"]
 
     race = df_clean_profile[(df_clean_profile["year"] == year) & (df_clean_profile["round"] == round_number)].copy()
     if race.empty:
         raise HTTPException(status_code=404, detail=f"No data for {year} round {round_number} with profile '{profile}'")
 
-    train = df_clean_profile[df_clean_profile["year"] < year].dropna(subset=features)
-    xgb_preds = profile_xgb.predict(race[features])
-
+    train, weights = training_rows_for_prediction(df_clean_profile, year, round_number)
+    train = train.dropna(subset=features)
+    weights = weights.loc[train.index].to_numpy()
     if train.empty:
-        preds = xgb_preds
-    else:
-        scaler = StandardScaler()
-        baseline = Ridge()
-        X_train_scaled = scaler.fit_transform(train[features])
-        baseline.fit(X_train_scaled, train[TARGET])
-        baseline_preds = baseline.predict(scaler.transform(race[features]))
-        alpha = get_historical_alpha(year, profile_runtime)
-        preds = (alpha * baseline_preds) + ((1 - alpha) * xgb_preds)
+        raise HTTPException(status_code=404, detail=f"No training data before {year} round {round_number}")
+
+    scaler = StandardScaler()
+    baseline = Ridge()
+    X_train_scaled = scaler.fit_transform(train[features])
+    baseline.fit(X_train_scaled, train[TARGET], sample_weight=weights)
+    baseline_preds = baseline.predict(scaler.transform(race[features]))
+
+    xgb_model = build_xgb_model()
+    xgb_model.fit(train[features], train[TARGET], sample_weight=weights)
+    xgb_preds = xgb_model.predict(race[features])
+
+    alpha = get_historical_alpha(year, profile_runtime)
+    preds = (alpha * baseline_preds) + ((1 - alpha) * xgb_preds)
 
     win_probs = win_probs_from_preds(preds)
     results = make_results(race.to_dict("records"), preds, win_probs, race["position"].values)
     return results, accuracy_metrics(results)
 
 
-def predict_future_2026(circuit_id, profile=DEFAULT_PROFILE, recent_weight=10):
+def predict_future_2026(circuit_id, profile=DEFAULT_PROFILE):
     profile_runtime = get_profile_runtime(profile)
     df_clean_profile = profile_runtime["df_clean"]
     features = profile_runtime["features"]
+    latest_season = latest_completed_season(df_clean_profile)
 
-    train_df = df_clean_profile.dropna(subset=features).copy()
+    train_df, weights = training_rows_for_prediction(df_clean_profile, latest_season)
+    train_df = train_df.dropna(subset=features).copy()
+    weights = weights.loc[train_df.index].to_numpy()
     X_train = train_df[features]
     y_train = train_df[TARGET]
-
-    weights = np.ones(len(train_df))
-    weights[train_df["year"] == 2026] = recent_weight
-    weights[train_df["year"] == 2025] = recent_weight * 0.3
-    weights[train_df["year"] == 2024] = recent_weight * 0.1
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
     baseline = Ridge()
-    baseline.fit(X_train_scaled, y_train)
+    baseline.fit(X_train_scaled, y_train, sample_weight=weights)
 
-    weighted_xgb = XGBRegressor(
+    weighted_xgb = build_xgb_model(
         n_estimators=300,
-        max_depth=3,
         learning_rate=0.01,
-        subsample=0.9,
         colsample_bytree=0.8,
         min_child_weight=1,
         reg_lambda=1,
-        random_state=42,
-        eval_metric="mae",
     )
     weighted_xgb.fit(X_train, y_train, sample_weight=weights)
 
@@ -896,6 +932,7 @@ def get_races():
         }
         for _, r in hist.iterrows()
     ]
+    completed_2026_rounds = set(df.loc[df["year"] == 2026, "round"].astype(int).tolist())
     future = [
         {
             "key": f"2026_{c['circuit']}",
@@ -903,11 +940,11 @@ def get_races():
             "circuit": c["circuit"],
             "round": c["round"],
             "drivers": 22,
-            "name": f"2026 — {c['name']}",
+            "name": f"2026 - {c['name']}",
             "is_future": True,
         }
         for c in F1_2026_CIRCUITS
-        if not c["completed"]
+        if int(c["round"]) not in completed_2026_rounds
     ]
     return historical + future
 
@@ -935,8 +972,8 @@ def get_race(year: int, round_number: int, profile: str = DEFAULT_PROFILE):
                 "profile_label": profile_runtime["label"],
                 "best_alpha": alpha,
                 "note": (
-                    "Pre-qualifying prediction. 2026 races weighted 10x, 2025 weighted 3x, "
-                    "2024 weighted 1x. Equal grid and medium tyre assumed."
+                    "Pre-qualifying prediction. Latest completed 2026 races are weighted 10x, "
+                    "2025 is weighted 3x, and 2024 is weighted 1x. Equal grid and medium tyre assumed."
                 ),
             }
 

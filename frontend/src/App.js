@@ -4,6 +4,7 @@ import "./App.css"
 
 const API = process.env.REACT_APP_API_URL?.replace(/\/$/, "")
   || (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "/api")
+const BACKEND_KEEPALIVE_MS = 4 * 60 * 1000
 
 const surname = (n) => n.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ").split(" ").pop()
 const fmtCircuit = (c) => c?.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || ""
@@ -310,7 +311,7 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
               {profileDescription ? ` ${profileDescription}` : ""}
               {objectiveMetric && objectiveValue !== undefined && objectiveValue !== null ? (
                 <>
-                  {" "}Best feature-search score: <span style={{ color: "#fff", fontWeight: "700" }}>
+                  {" "}Feature-search selected score: <span style={{ color: "#fff", fontWeight: "700" }}>
                     {METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : Number(objectiveValue).toFixed(3)}
                   </span>
                   {selectedMethod ? ` via ${selectedMethod}.` : "."}
@@ -691,6 +692,19 @@ export default function App() {
   const [error, setError] = useState("")
 
   useEffect(() => {
+    const pingBackend = () => {
+      fetch(`${API}/health`, {
+        cache: "no-store",
+        keepalive: true,
+      }).catch(() => {})
+    }
+
+    pingBackend()
+    const intervalId = window.setInterval(pingBackend, BACKEND_KEEPALIVE_MS)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  useEffect(() => {
     fetch(`${API}/races`)
       .then((r) => {
         if (!r.ok) {
@@ -907,7 +921,7 @@ export default function App() {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "8px", color: "#CCC", letterSpacing: "2px" }}>CIRCUIT</span>
                 <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} style={{ ...sel, minWidth: "260px" }}>
-                  {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " 🔮" : ""}</option>)}
+                  {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " (Future)" : ""}</option>)}
                 </select>
               </div>
               <button
@@ -953,7 +967,7 @@ export default function App() {
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: "9px", letterSpacing: "6px", color: "#E8003D", marginBottom: "8px" }}>SELECT YEAR + CIRCUIT ABOVE AND PRESS PREDICT</div>
                 <div style={{ fontSize: "22px", fontWeight: "900", fontFamily: "Georgia,serif" }}>Simulate Any F1 Race</div>
-                <div style={{ fontSize: "11px", color: "#CCC", marginTop: "6px" }}>2015–2026 race data | notebook-aligned prediction pipeline 🔮</div>
+                <div style={{ fontSize: "11px", color: "#CCC", marginTop: "6px" }}>2015-2026 race data | notebook-aligned prediction pipeline</div>
               </div>
               <div style={{ display: "flex", gap: "3px", marginTop: "8px", flexWrap: "wrap", justifyContent: "center" }}>
                 {[
@@ -975,9 +989,9 @@ export default function App() {
             <div style={{ animation: "fadeUp 0.3s ease" }}>
               {isFuture && (
                 <div style={{ padding: "12px 16px", marginBottom: "16px", background: "#0A0A1A", border: "1px solid #3671C644", borderLeft: "3px solid #3671C6", display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ fontSize: "14px" }}>🔮</div>
+                  <div style={{ fontSize: "10px", color: "#3671C6", fontWeight: "900", letterSpacing: "2px" }}>FUT</div>
                   <div>
-                    <div style={{ fontSize: "9px", color: "#3671C6", letterSpacing: "3px", marginBottom: "3px" }}>PRE-QUALIFYING PREDICTION — 2026 FUTURE RACE</div>
+                    <div style={{ fontSize: "9px", color: "#3671C6", letterSpacing: "3px", marginBottom: "3px" }}>PRE-QUALIFYING PREDICTION - 2026 FUTURE RACE</div>
                     <div style={{ fontSize: "11px", color: "#888" }}>{futureNote}</div>
                   </div>
                 </div>
@@ -1015,7 +1029,7 @@ export default function App() {
                     {isFuture ? (
                       <div style={{ fontSize: "10px", color: "#888", lineHeight: "1.7" }}>
                         {raceInfo?.profileLabel || modelStats?.profile_label}<br />
-                        2026 weighted 10×, 2025 weighted 3×<br />
+                        2026 weighted 10x, 2025 weighted 3x<br />
                         Equal grid, medium tyre, dry track assumed<br />
                         No actual results available yet
                       </div>
