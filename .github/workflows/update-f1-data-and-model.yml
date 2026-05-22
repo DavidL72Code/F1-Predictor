@@ -1,0 +1,58 @@
+name: Update F1 Data And Model
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Season to update, defaults to current UTC year"
+        required: false
+        type: string
+      force_train:
+        description: "Run neighbor feature search even if no CSVs changed"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: f1-data-model-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-render.txt -r requirements-auto.txt
+
+      - name: Update data and live feature profile
+        run: |
+          args=()
+          if [ -n "${{ inputs.season }}" ]; then
+            args+=(--season "${{ inputs.season }}")
+          fi
+          if [ "${{ inputs.force_train }}" = "true" ]; then
+            args+=(--force-train)
+          fi
+          python scripts/run_auto_update.py --with-fastf1 "${args[@]}"
+
+      - name: Commit updated artifacts
+        if: env.F1_AUTO_UPDATE_CHANGED == 'true'
+        run: |
+          git config user.name "f1-data-bot"
+          git config user.email "f1-data-bot@users.noreply.github.com"
+          git add data/raw data/processed models
+          git diff --cached --quiet || git commit -m "Update F1 data and live model profile"
+          git push

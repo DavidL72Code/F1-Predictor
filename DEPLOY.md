@@ -22,3 +22,13 @@
 1. Deploy the backend to Render first and copy the Render service URL.
 2. Set `RENDER_API_URL` in Vercel to that Render URL.
 3. Redeploy the frontend so the proxy can forward prediction requests to Render.
+
+## Automated data/model refresh
+
+- `.github/workflows/update-f1-data-and-model.yml` runs every 6 hours and can also be started manually from GitHub Actions.
+- The workflow calls `scripts/run_auto_update.py`, which:
+  - fetches latest completed race data from Jolpica-F1-compatible endpoints
+  - optionally enriches tyre/weather fields with FastF1
+  - runs the fast `neighbors` feature search seeded by `data/processed/feature_search_profile_live_summary.json`
+  - commits changed `data/` and `models/` artifacts back to the repo
+- Render auto-deploy picks up the workflow's commit and redeploys the backend with the refreshed data/artifacts.
