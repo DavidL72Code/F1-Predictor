@@ -251,7 +251,12 @@ def enrich_fastf1(season, rounds, cache_dir):
             print(f"Skipping FastF1 enrichment for {season} round {round_number}: {exc}")
             continue
 
-        laps = session.laps
+        try:
+            laps = session.laps
+        except Exception as exc:
+            print(f"Skipping FastF1 tyre enrichment for {season} round {round_number}: {exc}")
+            laps = None
+
         if laps is not None and not laps.empty:
             lap_one = laps[laps["LapNumber"] == 1]
             for _, lap in lap_one.dropna(subset=["Driver", "Compound"]).iterrows():
@@ -268,7 +273,12 @@ def enrich_fastf1(season, rounds, cache_dir):
                     }
                 )
 
-        weather = getattr(session, "weather_data", None)
+        try:
+            weather = getattr(session, "weather_data", None)
+        except Exception as exc:
+            print(f"Skipping FastF1 weather enrichment for {season} round {round_number}: {exc}")
+            weather = None
+
         if weather is not None and not weather.empty:
             weather_rows.append(
                 {
