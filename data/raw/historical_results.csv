@@ -4785,3 +4785,15 @@ year,round,circuit,driver,team,grid,position,won,points,laps,status
 2026,4,miami,lawson,rb,11,20,0,0.0,6,Retired
 2026,4,miami,gasly,alpine,9,21,0,0.0,4,Retired
 2026,4,miami,hadjar,red_bull,22,22,0,0.0,4,Retired
+2026,5,villeneuve,antonelli,mercedes,2,1,1,25.0,68,Finished
+2026,5,villeneuve,hamilton,ferrari,5,2,0,18.0,68,Finished
+2026,5,villeneuve,max_verstappen,red_bull,6,3,0,15.0,68,Finished
+2026,5,villeneuve,leclerc,ferrari,8,4,0,12.0,68,Finished
+2026,5,villeneuve,hadjar,red_bull,7,5,0,10.0,67,Lapped
+2026,5,villeneuve,colapinto,alpine,10,6,0,8.0,67,Lapped
+2026,5,villeneuve,lawson,rb,12,7,0,6.0,67,Lapped
+2026,5,villeneuve,gasly,alpine,14,8,0,4.0,67,Lapped
+2026,5,villeneuve,sainz,williams,15,9,0,2.0,67,Lapped
+2026,5,villeneuve,bearman,haas,16,10,0,1.0,67,Lapped
+2026,5,villeneuve,piastri,mclaren,4,11,0,0.0,66,Lapped
+2026,5,villeneuve,hulkenberg,audi,11,12,0,0.0,66,Lapped
