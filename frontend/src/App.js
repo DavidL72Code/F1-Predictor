@@ -73,22 +73,42 @@ const cachedJson = (url) => {
   return promise
 }
 
+/* Coalesce a scroll/resize handler to at most one run per animation frame,
+   so multiple listeners don't each force a layout on every scroll event. */
+const rafThrottle = (fn) => {
+  let scheduled = false
+  return (...args) => {
+    if (scheduled) return
+    scheduled = true
+    requestAnimationFrame(() => {
+      scheduled = false
+      fn(...args)
+    })
+  }
+}
+
 /* ── Scroll progress bar across the top of the viewport ── */
 const ScrollProgress = () => {
   const barRef = useRef(null)
   useEffect(() => {
-    const onScroll = () => {
+    // Cache the scrollable height; only recompute on resize, not per scroll.
+    let max = document.documentElement.scrollHeight - window.innerHeight
+    const update = () => {
       const bar = barRef.current
       if (!bar) return
-      const max = document.documentElement.scrollHeight - window.innerHeight
       bar.style.width = max > 0 ? `${(window.scrollY / max) * 100}%` : "0%"
     }
-    onScroll()
+    const onScroll = rafThrottle(update)
+    const onResize = rafThrottle(() => {
+      max = document.documentElement.scrollHeight - window.innerHeight
+      update()
+    })
+    update()
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+    window.addEventListener("resize", onResize)
     return () => {
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
+      window.removeEventListener("resize", onResize)
     }
   }, [])
   return <div className="scroll-progress" ref={barRef} />
@@ -98,7 +118,7 @@ const ScrollProgress = () => {
 const BackToTop = () => {
   const [show, setShow] = useState(false)
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 500)
+    const onScroll = rafThrottle(() => setShow(window.scrollY > 500))
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
@@ -330,15 +350,16 @@ const AnalyticsHero = ({ children }) => {
       }
     }
 
-    const onScroll = () => {
+    const onScroll = rafThrottle(() => {
       const hero = heroRef.current
       const content = contentRef.current
       if (!hero || !content) return
       const rect = hero.getBoundingClientRect()
+      if (rect.bottom < 0 || rect.top > window.innerHeight) return // off-screen: skip
       const progress = -rect.top / Math.max(rect.height, 1)
-      content.style.transform = `translateY(${progress * 48}px) scale(${1 + progress * 0.04})`
-      el.style.transform = `translateY(${progress * 28}px)`
-    }
+      content.style.transform = `translate3d(0, ${progress * 48}px, 0) scale(${1 + progress * 0.04})`
+      el.style.transform = `translate3d(0, ${progress * 28}px, 0)`
+    })
 
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => {

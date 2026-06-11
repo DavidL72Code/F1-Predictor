@@ -73,7 +73,8 @@ body {
   height: 2px;
   background: linear-gradient(90deg, var(--accent), #ff4d79);
   z-index: 500;
-  transition: width 0.08s linear;
+  transition: width 0.1s linear;
+  will-change: width;
   pointer-events: none;
 }
 
