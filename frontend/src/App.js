@@ -338,47 +338,47 @@ const AnalyticsHero = ({ children }) => {
 const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
   const [metric, setMetric] = useState("winner_acc")
   if (!analytics) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}><div style={{ fontSize: "12px", color: "var(--text-muted)", letterSpacing: "3px" }}>LOADING ANALYTICS...</div></div>
-  const featureSearchBenchmark = modelStats?.feature_search_benchmark
-  const data = featureSearchBenchmark?.rows || analytics.with_gap || []
+  const benchmark = modelStats?.feature_search_benchmark
+  const history = analytics.with_gap || []
+  const benchRows = benchmark?.rows || []
+  const benchmarkYears = benchmark?.years || []
   const METRICS = {
-    winner_acc:{label:"Winner Accuracy %",fmt:(v)=>`${Number(v).toFixed(1)}%`},
-    podium_acc:{label:"Podium Accuracy %",fmt:(v)=>`${Number(v).toFixed(1)}%`},
-    spearman:{label:"Spearman Rank",fmt:(v)=>Number(v).toFixed(3)},
-    mae:{label:"MAE (positions off)",fmt:(v)=>Number(v).toFixed(2)},
-    ndcg:{label:"NDCG Score",fmt:(v)=>Number(v).toFixed(3)},
-    within_3:{label:"Within 3 Positions %",fmt:(v)=>`${Number(v).toFixed(1)}%`},
+    winner_acc:{label:"Winner Accuracy",fmt:(v)=>`${Number(v).toFixed(1)}%`},
+    podium_acc:{label:"Podium Accuracy",fmt:(v)=>`${Number(v).toFixed(1)}%`},
+    spearman:{label:"Spearman",fmt:(v)=>Number(v).toFixed(3)},
+    mae:{label:"MAE",fmt:(v)=>Number(v).toFixed(2)},
+    ndcg:{label:"NDCG",fmt:(v)=>Number(v).toFixed(3)},
+    within_3:{label:"Within 3 Pos",fmt:(v)=>`${Number(v).toFixed(1)}%`},
   }
   const MODEL_META = [
-    { key:"baseline", chartKey:"Baseline", label:"Ridge Baseline", short:"RIDGE", color:"#4488FF", desc:"Linear, stable, conservative" },
-    { key:"xgboost", chartKey:"XGBoost", label:"XGBoost", short:"XGB", color:"#E8003D", desc:"Non-linear tree model" },
-    { key:"ensemble_winner", chartKey:"Ens.Winner", label:"Ensemble (Winner)", short:"ENS-W", color:"#FFD700", desc:"Blend optimized for picking P1" },
-    { key:"ensemble_position", chartKey:"Ens.Position", label:"Ensemble (Position)", short:"ENS-P", color:"#00A550", desc:"Blend optimized for full-grid order" },
+    { key:"baseline", chartKey:"Baseline", label:"Ridge Baseline", color:"#4488FF", desc:"Linear — stable, conservative" },
+    { key:"xgboost", chartKey:"XGBoost", label:"XGBoost", color:"#E8003D", desc:"Gradient-boosted trees — non-linear patterns" },
+    { key:"ensemble_winner", chartKey:"Ens.Winner", label:"Ensemble (Winner)", color:"#FFD700", desc:"α-blend tuned for P1 hit rate — powers SIMULATE RACE" },
+    { key:"ensemble_position", chartKey:"Ens.Position", label:"Ensemble (Position)", color:"#00A550", desc:"α-blend tuned for full-grid ranking (Spearman)" },
   ]
   const SUMMARY_METRICS = ["winner_acc", "podium_acc", "spearman", "mae"]
   const liveFeatures = modelStats?.features || []
-  const benchmarkYears = featureSearchBenchmark?.years || []
   const activeProfile = MODEL_PROFILES.find((profile) => profile.key === selectedProfile)
   const profileLabel = modelStats?.profile_label || activeProfile?.label || "Profile"
-  const profileDescription = modelStats?.profile_description || activeProfile?.description || ""
   const objectiveMetric = modelStats?.objective_metric
   const objectiveValue = modelStats?.objective_value
   const selectedMethod = modelStats?.selected_method
-  const averageMetricValue = (modelKey, metricKey) => {
-    const rows = data.filter((d) => d[modelKey]?.[metricKey] !== undefined && d[modelKey]?.[metricKey] !== null)
-    if (!rows.length) return null
-    return rows.reduce((sum, row) => sum + row[modelKey][metricKey], 0) / rows.length
+  const avgFromRows = (rows, modelKey, metricKey) => {
+    const vals = rows.filter((d) => d[modelKey]?.[metricKey] !== undefined && d[modelKey]?.[metricKey] !== null)
+    if (!vals.length) return null
+    return vals.reduce((sum, row) => sum + row[modelKey][metricKey], 0) / vals.length
   }
-  const averageOverallStats = MODEL_META.map((model) => ({
+  const averages = MODEL_META.map((model) => ({
     ...model,
     stats: Object.fromEntries(
       SUMMARY_METRICS.map((metricKey) => [
         metricKey,
-        featureSearchBenchmark?.averages?.[model.key]?.[metricKey] ?? averageMetricValue(model.key, metricKey),
+        benchmark?.averages?.[model.key]?.[metricKey] ?? avgFromRows(benchRows.length ? benchRows : history, model.key, metricKey),
       ])
     ),
   }))
   const m = METRICS[metric]
-  const chartData = data.map((d) => ({
+  const chartData = history.map((d) => ({
     year: d.test_year,
     Baseline: d.baseline[metric],
     XGBoost: d.xgboost[metric],
@@ -395,182 +395,133 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
     <div>
       <AnalyticsHero>
         <div className="kicker">MODEL ANALYSIS</div>
-        <div className="page-title">Top Feature Set Performance</div>
+        <div className="page-title">Model Performance &amp; Selection</div>
         <div className="page-sub">
-          {data.length} evaluation windows · <span style={{ color: "#fff" }}>{profileLabel}</span> profile · 4 models
+          {history.length} seasons of rolling evaluation · <span style={{ color: "#fff" }}>{profileLabel}</span> profile · 4 models
         </div>
       </AnalyticsHero>
       <div className="page">
+
+      {/* ── Active profile ── */}
       <Reveal>
-        <div className="card" style={{ borderLeft: "3px solid var(--accent)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", flexWrap: "wrap", marginBottom: "14px" }}>
-            <div>
-              <div className="kicker">ACTIVE PROFILE</div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: "1.7", maxWidth: "720px" }}>
-                <span style={{ color: "#fff", fontWeight: "700" }}>{profileLabel}</span> is active.
-                {profileDescription ? ` ${profileDescription}` : ""}
-                {objectiveMetric && objectiveValue !== undefined && objectiveValue !== null ? (
-                  <>
-                    {" "}Feature-search selected score: <span style={{ color: "#fff", fontWeight: "700" }}>
-                      {METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : Number(objectiveValue).toFixed(3)}
-                    </span>
-                    {selectedMethod ? ` via ${selectedMethod}.` : "."}
-                  </>
-                ) : "."}
-                {benchmarkYears.length > 0 ? ` Benchmark window: ${benchmarkYears.join(", ")}.` : ""}
-              </div>
-            </div>
-            <div style={{ alignSelf: "flex-start", padding: "10px 14px", background: "var(--surface-3)", border: "1px solid var(--border)", borderRadius: "6px", textAlign: "center" }}>
-              <div style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "2px", marginBottom: "4px" }}>ACTIVE MODE</div>
-              <div style={{ fontSize: "12px", color: "#fff", fontWeight: "700" }}>{liveFeatures.length || 10} FEATURES</div>
-            </div>
+        <div className="card" style={{ borderLeft: "3px solid var(--accent)", padding: "18px 20px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap", marginBottom: "10px" }}>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "#fff" }}>{profileLabel}</span>
+            {objectiveMetric && objectiveValue != null && (
+              <span className="num" style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                {METRICS[objectiveMetric]?.label || objectiveMetric}: <span style={{ color: "#fff", fontWeight: "700" }}>{METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : objectiveValue}</span>
+                {selectedMethod ? ` · ${selectedMethod}` : ""}
+              </span>
+            )}
+            {benchmarkYears.length > 0 && (
+              <span style={{ fontSize: "11px", color: "var(--text-faint)" }}>selected on {benchmarkYears.join("–")}</span>
+            )}
+            <span style={{ fontSize: "11px", color: "var(--text-faint)", marginLeft: "auto" }}>{liveFeatures.length || 10} live features</span>
           </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
             {liveFeatures.map((feature) => (
-              <div key={feature} style={{ fontSize: "11px", color: "var(--text-muted)", padding: "6px 11px", border: "1px solid var(--border)", borderRadius: "14px", background: "var(--surface-2)" }}>
+              <span key={feature} style={{ fontSize: "10px", color: "var(--text-muted)", padding: "4px 9px", border: "1px solid var(--border)", borderRadius: "12px", background: "var(--surface-2)" }}>
                 {feature.replace(/_/g, " ")}
-              </div>
+              </span>
             ))}
           </div>
         </div>
       </Reveal>
+
+      {/* ── Benchmark averages table ── */}
       <Reveal delay={0.05}>
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-            <div>
-              <div className="card-label">AVERAGE PERFORMANCE BY METHOD</div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)", lineHeight: "1.7", maxWidth: "720px" }}>
-                Average performance for each method on the active profile's benchmark window.
-              </div>
-            </div>
-            <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "1.5px", alignSelf: "flex-start" }}>
-              {benchmarkYears.length > 0 ? benchmarkYears.join(" · ") : "TOP FEATURE SET, AVERAGED"}
-            </div>
-          </div>
-          <div className="card-grid">
-            {averageOverallStats.map((model) => (
-              <div key={model.key} className="tile" style={{ borderTop: `3px solid ${model.color}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "12px" }}>
-                  <div>
-                    <div style={{ fontSize: "12px", fontWeight: "700", color: model.color, marginBottom: "4px" }}>{model.label}</div>
-                    <div style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.5" }}>{model.desc}</div>
-                  </div>
-                  <div style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px" }}>{model.short}</div>
-                </div>
-                {SUMMARY_METRICS.map((metricKey) => (
-                  <div key={metricKey} style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
-                    <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{METRICS[metricKey].label}</div>
-                    <div className="num" style={{ fontSize: "12px", color: "#fff", fontWeight: "700" }}>
-                      {model.stats[metricKey] === null ? "n/a" : METRICS[metricKey].fmt(model.stats[metricKey])}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </Reveal>
-      <Reveal delay={0.05}>
-        <div className="card" style={{ borderLeft: "3px solid var(--blue)" }}>
-          <div className="card-label" style={{ marginBottom: "16px" }}>WHY THESE BENCHMARK YEARS SELECTED THIS MODEL</div>
-          <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "16px", borderLeft: "3px solid var(--border-strong)" }}>
-            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>Two different things: full analytics vs feature-search benchmark</div>
-            <div className="prose" style={{ fontSize: "12px" }}>
-              The bar chart above shows rolling evaluation across <strong>2016–2026</strong> — the full historical record of how each model performs year by year, trained on all prior seasons.
-              That is separate from the <strong>feature search benchmark</strong>, which evaluated only <strong>2022–2024</strong> to decide which feature set and ensemble blend to use live.
-              The feature search deliberately used recent years only, because patterns from 2016 or 2019 are less representative of how current F1 cars behave.
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", marginBottom: "20px" }}>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>Why 2022–2024 for Model Selection</div>
-              <div className="prose">
-                The feature search used a strict temporal split: train on all data up to year N−1, predict year N — the same process used when the model runs live. Three years was chosen over the full 2016–2026 range because recent seasons dominate the signal. A feature that worked well in 2017 but not 2023 should not influence today's live predictions.
-                <br /><br />
-                These three years also cover structurally different F1 dynamics, making the selection robust rather than tuned to one type of season.
-              </div>
-              <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                {[
-                  { year: "2022", tag: "REG RESET", color: "#E8003D", desc: "New ground-effect rules broke historical team-strength assumptions almost overnight. XGBoost (50.0% winner acc) underperformed Ridge (54.5%) — its learned patterns expired faster." },
-                  { year: "2023", tag: "DOMINANT", color: "#FF8000", desc: "Red Bull dominance made the race highly predictable from qualifying pace. Both models scored well, with Ridge reaching 86.4% winner accuracy." },
-                  { year: "2024", tag: "COMPETITIVE", color: "#3671C6", desc: "Multi-team fight at the front. Harder to separate P1–P4 on pre-race signals alone. Separating the top four required richer non-linear features." },
-                ].map((r) => (
-                  <div key={r.year} style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "6px", borderLeft: `3px solid ${r.color}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
-                      <span className="num" style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>{r.year}</span>
-                      <span style={{ fontSize: "8px", color: r.color, background: `${r.color}18`, padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px" }}>{r.tag}</span>
-                    </div>
-                    <div className="prose" style={{ fontSize: "12px" }}>{r.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>Why the Blend Beat Either Solo Model</div>
-              <div className="prose" style={{ marginBottom: "14px" }}>
-                Ridge and XGBoost have complementary failure modes across these three seasons. Ridge is stable but misses the non-linear interaction patterns that separate close competitors. XGBoost captures those interactions but is more sensitive to concept drift when regulations change.
-                <br /><br />
-                The ensemble search tested every alpha blend (Ridge weight 0.0 → 1.0) on each test year. The optimal mix varies by year and by objective — which is why the two profiles use different alpha values and even different feature sets.
-              </div>
-              <div style={{ padding: "14px", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "12px" }}>
-                <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "2px", marginBottom: "10px" }}>WINNER PROFILE RESULT</div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Winner) avg winner acc</span>
-                  <span className="num" style={{ fontWeight: "700", color: "#FFD700" }}>70.8%</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Winner) avg spearman</span>
-                  <span className="num" style={{ fontWeight: "700", color: "#FFD700" }}>0.670</span>
-                </div>
-                <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "8px", lineHeight: "1.6" }}>
-                  Optimized for P1 hit rate. Selects features like quali_gap, driver_form, circuit_overperformance, and starting_compound — signals that identify who is fastest <em>this specific weekend</em>.
-                </div>
-              </div>
-              <div style={{ padding: "14px", background: "var(--surface-2)", borderRadius: "6px" }}>
-                <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "2px", marginBottom: "10px" }}>FULL ORDER PROFILE RESULT</div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Position) avg spearman</span>
-                  <span className="num" style={{ fontWeight: "700", color: "#00A550" }}>0.684</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Position) avg winner acc</span>
-                  <span className="num" style={{ fontWeight: "700", color: "#00A550" }}>49.0%</span>
-                </div>
-                <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "8px", lineHeight: "1.6" }}>
-                  Optimized for full-grid ranking quality. Leans on team_win_rate, constructor_rank_norm, circuit history — long-run competitive position signals. Wins fewer P1 calls but places the whole grid more accurately.
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style={{ padding: "14px", background: "var(--surface-3)", borderRadius: "6px", borderTop: "2px solid var(--border-strong)" }}>
-            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff", marginBottom: "5px" }}>The Core Tradeoff</div>
-            <div className="prose" style={{ fontSize: "12px" }}>
-              Winner-Centric hits P1 70.8% of the time but ranks the whole grid at 0.670 Spearman. Full Finishing Order ranks the grid at 0.684 Spearman but only identifies the winner 49% of the time. You cannot simultaneously maximize both — optimizing for who wins requires different features and blend weights than optimizing for the complete classification.
-            </div>
-          </div>
-        </div>
-      </Reveal>
-      <Reveal>
-        <div style={{ marginBottom: "14px" }}>
-          <div className="card-label">BY YEAR BREAKDOWN</div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {Object.entries(METRICS).map(([key]) => (
-              <button
-                key={key}
-                onClick={() => setMetric(key)}
-                className={`profile-chip${metric === key ? " active" : ""}`}
-              >
-                {key.replace(/_/g, " ").toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Reveal>
-      <Reveal>
         <div className="card">
           <div className="card-label">
-            {m.label.toUpperCase()} — ALL 4 MODELS BY SEASON
-            <span style={{ color: "var(--text-faint)", fontWeight: "400", letterSpacing: "0.5px" }}> (2022 XGBoost faded = concept drift)</span>
+            BENCHMARK AVERAGES — FEATURE SELECTION WINDOW ({benchmarkYears.length ? benchmarkYears.join("–") : "2022–2024"})
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <div style={{ minWidth: "560px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(190px, 1.4fr) repeat(4, 1fr)", gap: "0 12px", padding: "6px 12px", fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px", borderBottom: "1px solid var(--border)" }}>
+                <div>MODEL</div>
+                {SUMMARY_METRICS.map((k) => <div key={k} style={{ textAlign: "right" }}>{METRICS[k].label.toUpperCase()}</div>)}
+              </div>
+              {averages.map((model) => {
+                const isSelected = model.key === selectedMethod
+                return (
+                  <div key={model.key} style={{ display: "grid", gridTemplateColumns: "minmax(190px, 1.4fr) repeat(4, 1fr)", gap: "0 12px", alignItems: "center", padding: "9px 12px", borderRadius: "5px", background: isSelected ? "rgba(232,0,61,0.06)" : "transparent", borderLeft: `3px solid ${isSelected ? model.color : "transparent"}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: model.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: "12px", fontWeight: "600", color: isSelected ? "#fff" : "var(--text-muted)" }}>{model.label}</span>
+                      {isSelected && <span style={{ fontSize: "8px", color: "var(--accent)", background: "rgba(232,0,61,0.12)", padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px" }}>LIVE</span>}
+                    </div>
+                    {SUMMARY_METRICS.map((k) => (
+                      <div key={k} className="num" style={{ textAlign: "right", fontSize: "12px", fontWeight: "700", color: isSelected ? "#fff" : "var(--text-muted)" }}>
+                        {model.stats[k] === null ? "n/a" : METRICS[k].fmt(model.stats[k])}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* ── Why 2022–2024 selected this model ── */}
+      <Reveal delay={0.05}>
+        <div className="card" style={{ borderLeft: "3px solid var(--blue)" }}>
+          <div className="card-label">WHY THE 2022–2024 WINDOW SELECTED THIS MODEL</div>
+          <div className="prose" style={{ fontSize: "12.5px", marginBottom: "14px" }}>
+            Model and feature selection used only the three most recent completed seasons, while the chart below shows the full rolling record (2016–2026).
+            Recent years decide the live model because a feature that worked in 2017 but not 2023 should not influence today's predictions.
+            Each test is a strict temporal split — train on everything up to year N−1, predict year N — so nothing leaks from the future.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px" }}>
+            {[
+              { year: "2022", tag: "REG RESET", color: "#E8003D", desc: "New ground-effect rules expired old patterns — XGBoost (50.0% winner acc) fell below Ridge (54.5%). Tests drift survival." },
+              { year: "2023", tag: "DOMINANT", color: "#FF8000", desc: "Red Bull dominance — qualifying pace maps cleanly to wins, Ridge hit 86.4%. Tests the easy case isn't fumbled." },
+              { year: "2024", tag: "COMPETITIVE", color: "#3671C6", desc: "Four teams in the front fight — separating P1–P4 needs non-linear features. Tests close-field resolution." },
+            ].map((r) => (
+              <div key={r.year} style={{ display: "flex", alignItems: "baseline", gap: "10px", padding: "9px 12px", background: "var(--surface-2)", borderRadius: "5px", borderLeft: `3px solid ${r.color}` }}>
+                <span className="num" style={{ fontSize: "13px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>{r.year}</span>
+                <span style={{ fontSize: "8px", color: r.color, background: `${r.color}18`, padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px", flexShrink: 0 }}>{r.tag}</span>
+                <span className="prose" style={{ fontSize: "12px" }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px", marginBottom: "12px" }}>
+            <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "5px", borderTop: "2px solid #FFD700" }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: "#FFD700", marginBottom: "6px" }}>Winner-Centric → Ensemble (Winner)</div>
+              <div className="num" style={{ fontSize: "12px", color: "#fff", marginBottom: "5px" }}>70.8% winner acc · 0.670 Spearman</div>
+              <div style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.6" }}>Picks weekend-pace features (quali gap, driver form, circuit overperformance) that identify who is fastest right now.</div>
+            </div>
+            <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "5px", borderTop: "2px solid #00A550" }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: "#00A550", marginBottom: "6px" }}>Full Order → Ensemble (Position)</div>
+              <div className="num" style={{ fontSize: "12px", color: "#fff", marginBottom: "5px" }}>0.684 Spearman · 49.0% winner acc</div>
+              <div style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.6" }}>Picks long-run strength features (team win rate, constructor rank, circuit history) that order the whole grid.</div>
+            </div>
+          </div>
+          <div className="prose" style={{ fontSize: "12px", padding: "10px 12px", background: "var(--surface-3)", borderRadius: "5px" }}>
+            <strong>The tradeoff:</strong> Ridge and XGBoost fail differently — Ridge misses non-linear interactions, XGBoost is fragile under regulation drift — so the search blends them (α tuned per objective). Maximizing P1 hit rate and maximizing full-grid order need different features and weights, which is why two profiles exist instead of one.
+          </div>
+        </div>
+      </Reveal>
+
+      {/* ── Full history chart ── */}
+      <Reveal>
+        <div className="card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+            <div className="card-label" style={{ marginBottom: 0 }}>
+              {m.label.toUpperCase()} BY SEASON — FULL ROLLING EVALUATION 2016–2026
+              <span style={{ color: "var(--text-faint)", fontWeight: "400", letterSpacing: "0.5px" }}> (2022 XGBoost faded = concept drift)</span>
+            </div>
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              {Object.entries(METRICS).map(([key]) => (
+                <button
+                  key={key}
+                  onClick={() => setMetric(key)}
+                  className={`profile-chip${metric === key ? " active" : ""}`}
+                  style={{ padding: "5px 10px", fontSize: "10px" }}
+                >
+                  {METRICS[key].label.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={chartData} margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
@@ -584,22 +535,25 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
               />
               <Legend wrapperStyle={{ fontSize: "11px", color: "#5A5A70" }} />
               {Object.entries(MODEL_COLORS).map(([name, color]) => (
-                <Bar key={name} dataKey={name} fill={color} maxBarSize={18} shape={<CustomBar dataKey={name} />} />
+                <Bar key={name} dataKey={name} fill={color} maxBarSize={14} shape={<CustomBar dataKey={name} />} />
               ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
       </Reveal>
+
+      {/* ── Per-year tiles ── */}
       <Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(112px,1fr))", gap: "8px", marginBottom: "16px" }}>
-          {data.map((d) => {
-            const borderColor = d.test_year === 2022 ? "#E8003D" : d.test_year === 2026 ? "#3671C6" : "#FF6B00"
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(108px,1fr))", gap: "6px", marginBottom: "16px" }}>
+          {history.map((d) => {
+            const inBenchmark = benchmarkYears.includes(d.test_year)
+            const borderColor = d.test_year === 2022 ? "#E8003D" : d.test_year === 2026 ? "#3671C6" : inBenchmark ? "#FF6B00" : "var(--border-strong)"
             return (
-              <div key={d.test_year} className="tile" style={{ borderTop: `3px solid ${borderColor}`, minWidth: "100px", padding: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                  <div className="num" style={{ fontSize: "16px", fontWeight: "800", color: "#fff" }}>{d.test_year}</div>
-                  {d.test_year === 2022 && <div style={{ fontSize: "7px", color: "#E8003D", background: "#E8003D15", padding: "2px 5px", borderRadius: "3px" }}>REG RESET</div>}
-                  {d.test_year === 2026 && <div style={{ fontSize: "7px", color: "#3671C6", background: "#3671C615", padding: "2px 5px", borderRadius: "3px" }}>2 RACES</div>}
+              <div key={d.test_year} className="tile" style={{ borderTop: `3px solid ${borderColor}`, padding: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div className="num" style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>{d.test_year}</div>
+                  {d.test_year === 2022 && <div style={{ fontSize: "7px", color: "#E8003D", background: "#E8003D15", padding: "2px 4px", borderRadius: "3px" }}>RESET</div>}
+                  {d.test_year === 2026 && <div style={{ fontSize: "7px", color: "#3671C6", background: "#3671C615", padding: "2px 4px", borderRadius: "3px" }}>2 RACES</div>}
                 </div>
                 {[
                   {label:"BASE",val:d.baseline[metric],color:"#4488FF"},
@@ -607,12 +561,12 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
                   {label:"ENS-W",val:d.ensemble_winner?.[metric],color:"#FFD700"},
                   {label:"ENS-P",val:d.ensemble_position?.[metric],color:"#00A550"},
                 ].map((row) => (
-                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
                     <div style={{ fontSize: "9px", color: "var(--text-faint)" }}>{row.label}</div>
-                    <div className="num" style={{ fontSize: "10px", color: row.color, fontWeight: "700" }}>{m.fmt(row.val)}</div>
+                    <div className="num" style={{ fontSize: "10px", color: row.color, fontWeight: "700" }}>{row.val == null ? "—" : m.fmt(row.val)}</div>
                   </div>
                 ))}
-                <div className="num" style={{ marginTop: "6px", fontSize: "8px", color: "var(--text-faint)" }}>
+                <div className="num" style={{ marginTop: "5px", fontSize: "8px", color: "var(--text-faint)" }}>
                   αW={d.best_alpha_winner ?? d.best_alpha ?? "-"} αP={d.best_alpha_position ?? "-"}
                 </div>
               </div>
@@ -620,41 +574,37 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
           })}
         </div>
       </Reveal>
+
+      {/* ── Models + metrics reference ── */}
       <Reveal>
         <div className="card">
-          <div className="card-label">MODEL KEY</div>
-          <div className="card-grid">
-            {[
-              {color:"#4488FF",name:"Ridge Baseline",desc:"Linear — stable, conservative"},
-              {color:"#E8003D",name:"XGBoost",desc:"300 decision trees — non-linear patterns"},
-              {color:"#FFD700",name:"Ensemble (Winner)",desc:"Winner-optimized blend — used in SIMULATE RACE ★"},
-              {color:"#00A550",name:"Ensemble (Position)",desc:"Spearman-optimized — best full grid ranking"},
-            ].map((mKey) => (
-              <div key={mKey.name} className="tile" style={{ borderLeft: `2px solid ${mKey.color}55` }}>
-                <div className="tile-title" style={{ color: mKey.color }}>{mKey.name}</div>
-                <div className="tile-desc">{mKey.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Reveal>
-      <Reveal>
-        <div className="card">
-          <div className="card-label">METRIC GLOSSARY</div>
-          <div className="card-grid">
-            {[
-              {name:"Winner Accuracy",color:"#E8003D",desc:"% of races where the predicted P1 driver actually won."},
-              {name:"Podium Accuracy",color:"#00A550",desc:"% of races where all 3 predicted podium drivers matched P1/P2/P3 exactly."},
-              {name:"Spearman Rank",color:"#4488FF",desc:"Correlation of predicted vs actual order all 20 drivers. 1.0 = perfect."},
-              {name:"MAE",color:"#27F4D2",desc:"Mean Absolute Error in positions. Lower is better."},
-              {name:"NDCG",color:"#FF6B00",desc:"Like Spearman but top positions matter more. Missing P1 hurts more than missing P17."},
-              {name:"Within 3 Positions",color:"#AAA",desc:"% of predictions landing within 3 positions of reality."},
-            ].map((g) => (
-              <div key={g.name} className="tile" style={{ borderLeft: `2px solid ${g.color}44` }}>
-                <div className="tile-title" style={{ color: g.color }}>{g.name}</div>
-                <div className="tile-desc">{g.desc}</div>
-              </div>
-            ))}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
+            <div>
+              <div className="card-label">MODELS</div>
+              {MODEL_META.map((mk) => (
+                <div key={mk.key} style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "7px" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: mk.color, flexShrink: 0, alignSelf: "center" }} />
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: mk.color, whiteSpace: "nowrap" }}>{mk.label}</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.5" }}>{mk.desc}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="card-label">METRICS</div>
+              {[
+                {name:"Winner Acc",color:"#E8003D",desc:"% of races where predicted P1 actually won"},
+                {name:"Podium Acc",color:"#00A550",desc:"% of races with all 3 podium spots exactly right"},
+                {name:"Spearman",color:"#4488FF",desc:"rank correlation of full 20-driver order (1.0 = perfect)"},
+                {name:"MAE",color:"#27F4D2",desc:"average positions off per driver — lower is better"},
+                {name:"NDCG",color:"#FF6B00",desc:"rank quality weighted toward the front of the field"},
+                {name:"Within 3",color:"#AAA",desc:"% of predictions within 3 positions of reality"},
+              ].map((g) => (
+                <div key={g.name} style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "7px" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: g.color, whiteSpace: "nowrap", minWidth: "84px" }}>{g.name}</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.5" }}>{g.desc}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </Reveal>
