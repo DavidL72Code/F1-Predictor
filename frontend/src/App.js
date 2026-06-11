@@ -52,6 +52,8 @@ const expectArray = (value, label) => {
   return value
 }
 
+/* Speed lines + dust are generated directly in the hero component via useEffect */
+
 const RaceCarLoader = () => {
   const pathRef = useRef(null)
   const frameRef = useRef(null)
@@ -236,6 +238,63 @@ const GridRow = ({ r, i, showActual }) => {
   )
 }
 
+const Reveal = ({ children }) => {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { el.classList.add("in"); obs.unobserve(el) } },
+      { threshold: 0.06 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  return <div ref={ref} className="reveal">{children}</div>
+}
+
+const AnalyticsHero = ({ children }) => {
+  const heroRef = useRef(null)
+  const contentRef = useRef(null)
+  const slRef = useRef(null)
+
+  useEffect(() => {
+    const el = slRef.current
+    if (el) {
+      for (let i = 0; i < 30; i++) {
+        const line = document.createElement("div")
+        line.className = "sline"
+        line.style.cssText = `top:${Math.random() * 100}%;width:${60 + Math.random() * 200}px;animation-duration:${0.28 + Math.random() * 0.6}s;animation-delay:${-Math.random() * 1.5}s;opacity:${0.05 + Math.random() * 0.18};`
+        el.appendChild(line)
+      }
+    }
+
+    const onScroll = () => {
+      const hero = heroRef.current
+      const content = contentRef.current
+      if (!hero || !content) return
+      const rect = hero.getBoundingClientRect()
+      const progress = -rect.top / Math.max(rect.height, 1)
+      content.style.transform = `translateY(${progress * 48}px) scale(${1 + progress * 0.04})`
+      el.style.transform = `translateY(${progress * 28}px)`
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      if (el) el.innerHTML = ""
+      window.removeEventListener("scroll", onScroll)
+    }
+  }, [])
+
+  return (
+    <div className="analytics-hero" ref={heroRef}>
+      <div className="speedlines" ref={slRef} />
+      <div className="vignette" />
+      <div className="analytics-hero-content" ref={contentRef}>{children}</div>
+    </div>
+  )
+}
+
 const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
   const [metric, setMetric] = useState("winner_acc")
   if (!analytics) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}><div style={{ fontSize: "11px", color: "#CCC", letterSpacing: "3px" }}>LOADING ANALYTICS...</div></div>
@@ -293,187 +352,202 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
     return <rect x={x} y={y} width={width} height={height} fill={fill} opacity={payload?.is2022 && dataKey === "XGBoost" ? 0.4 : 1} rx={2} />
   }
   return (
-    <div style={{ padding: "28px 32px", animation: "fadeUp 0.3s ease" }}>
-      <div style={{ marginBottom: "28px" }}>
+    <div>
+      <AnalyticsHero>
         <div style={{ fontSize: "8px", letterSpacing: "5px", color: "#E8003D", marginBottom: "6px" }}>MODEL ANALYSIS</div>
         <div style={{ fontSize: "26px", fontWeight: "900", fontFamily: "Georgia,serif" }}>Top Feature Set Performance</div>
-        <div style={{ fontSize: "11px", color: "#CCC", marginTop: "6px", lineHeight: "1.7", maxWidth: "680px" }}>
-          Ridge baseline vs XGBoost vs Ensemble (winner) vs Ensemble (position) across {data.length} evaluation windows,
-          using the currently selected <span style={{ color: "#fff", fontWeight: "700" }}>{profileLabel}</span> feature set.
+        <div style={{ fontSize: "11px", color: "#666", marginTop: "6px" }}>
+          {data.length} evaluation windows · <span style={{ color: "#fff" }}>{profileLabel}</span> profile · 4 models
         </div>
-      </div>
-      <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", borderLeft: "3px solid #E8003D", padding: "18px", marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", flexWrap: "wrap", marginBottom: "12px" }}>
-          <div>
-            <div style={{ fontSize: "9px", color: "#E8003D", letterSpacing: "3px", marginBottom: "6px" }}>ACTIVE PROFILE</div>
-            <div style={{ fontSize: "12px", color: "#CCC", lineHeight: "1.7", maxWidth: "720px" }}>
-              <span style={{ color: "#fff", fontWeight: "700" }}>{profileLabel}</span> is active.
-              {profileDescription ? ` ${profileDescription}` : ""}
-              {objectiveMetric && objectiveValue !== undefined && objectiveValue !== null ? (
-                <>
-                  {" "}Feature-search selected score: <span style={{ color: "#fff", fontWeight: "700" }}>
-                    {METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : Number(objectiveValue).toFixed(3)}
-                  </span>
-                  {selectedMethod ? ` via ${selectedMethod}.` : "."}
-                </>
-              ) : "."}
-              {benchmarkYears.length > 0 ? ` Benchmark window: ${benchmarkYears.join(", ")}.` : ""}
-            </div>
-          </div>
-          <div style={{ alignSelf: "flex-start", padding: "8px 10px", background: "#11111D", border: "1px solid #1A1A2A" }}>
-            <div style={{ fontSize: "8px", color: "#555", letterSpacing: "2px", marginBottom: "4px" }}>ACTIVE MODE</div>
-            <div style={{ fontSize: "10px", color: "#fff", fontWeight: "700" }}>{liveFeatures.length || 10} FEATURES</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {liveFeatures.map((feature) => (
-            <div key={feature} style={{ fontSize: "9px", color: "#BBB", padding: "6px 9px", border: "1px solid #1A1A2A", background: "#0E0E1A" }}>
-              {feature.replace(/_/g, " ")}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "18px", marginBottom: "18px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "14px" }}>
-          <div>
-            <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "6px" }}>AVERAGE PERFORMANCE BY METHOD</div>
-            <div style={{ fontSize: "12px", color: "#666", lineHeight: "1.7", maxWidth: "720px" }}>
-              Average performance for each method on the active profile's benchmark window. This lets you compare the same four models under whichever objective the user selected.
-            </div>
-          </div>
-          <div style={{ fontSize: "10px", color: "#444", letterSpacing: "2px", alignSelf: "flex-start" }}>
-            {benchmarkYears.length > 0 ? benchmarkYears.join(" • ") : "TOP FEATURE SET, AVERAGED"}
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: "10px" }}>
-          {averageOverallStats.map((model) => (
-            <div key={model.key} style={{ background: "#0E0E1A", border: "1px solid #1A1A2A", borderTop: `3px solid ${model.color}`, padding: "14px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: model.color, marginBottom: "4px" }}>{model.label}</div>
-                  <div style={{ fontSize: "9px", color: "#555", lineHeight: "1.5" }}>{model.desc}</div>
-                </div>
-                <div style={{ fontSize: "8px", color: "#333", letterSpacing: "2px" }}>{model.short}</div>
+      </AnalyticsHero>
+      <div style={{ padding: "28px 32px" }}>
+      <Reveal>
+        <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", borderLeft: "3px solid #E8003D", padding: "18px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", flexWrap: "wrap", marginBottom: "12px" }}>
+            <div>
+              <div style={{ fontSize: "9px", color: "#E8003D", letterSpacing: "3px", marginBottom: "6px" }}>ACTIVE PROFILE</div>
+              <div style={{ fontSize: "12px", color: "#CCC", lineHeight: "1.7", maxWidth: "720px" }}>
+                <span style={{ color: "#fff", fontWeight: "700" }}>{profileLabel}</span> is active.
+                {profileDescription ? ` ${profileDescription}` : ""}
+                {objectiveMetric && objectiveValue !== undefined && objectiveValue !== null ? (
+                  <>
+                    {" "}Feature-search selected score: <span style={{ color: "#fff", fontWeight: "700" }}>
+                      {METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : Number(objectiveValue).toFixed(3)}
+                    </span>
+                    {selectedMethod ? ` via ${selectedMethod}.` : "."}
+                  </>
+                ) : "."}
+                {benchmarkYears.length > 0 ? ` Benchmark window: ${benchmarkYears.join(", ")}.` : ""}
               </div>
-              {SUMMARY_METRICS.map((metricKey) => (
-                <div key={metricKey} style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
-                  <div style={{ fontSize: "9px", color: "#666" }}>{METRICS[metricKey].label}</div>
-                  <div style={{ fontSize: "10px", color: "#fff", fontWeight: "700" }}>
-                    {model.stats[metricKey] === null ? "n/a" : METRICS[metricKey].fmt(model.stats[metricKey])}
-                  </div>
-                </div>
-              ))}
             </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ marginBottom: "12px" }}>
-        <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "10px" }}>BY YEAR BREAKDOWN</div>
-        <div style={{ display: "flex", gap: "2px", flexWrap: "wrap" }}>
-        {Object.entries(METRICS).map(([key]) => (
-          <button
-            key={key}
-            onClick={() => setMetric(key)}
-            style={{
-              background: metric === key ? "#1A1A2A" : "transparent",
-              border: `1px solid ${metric === key ? "#E8003D" : "#1A1A2A"}`,
-              color: metric === key ? "#fff" : "#444",
-              padding: "6px 14px",
-              cursor: "pointer",
-              fontFamily: "'Courier New',monospace",
-              fontSize: "9px",
-              fontWeight: "700",
-              letterSpacing: "1px",
-            }}
-          >
-            {key.replace(/_/g, " ").toUpperCase()}
-          </button>
-        ))}
-        </div>
-      </div>
-      <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "20px", marginBottom: "16px" }}>
-        <div style={{ fontSize: "9px", color: "#444", letterSpacing: "3px", marginBottom: "16px" }}>
-          {m.label.toUpperCase()} — ALL 4 MODELS BY SEASON
-          <span style={{ color: "#333", fontSize: "8px" }}> (2022 XGBoost faded = concept drift)</span>
-        </div>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={chartData} margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#1A1A2A" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="year" tick={{ fill: "#555", fontSize: 11 }} axisLine={{ stroke: "#1A1A2A" }} tickLine={false} />
-            <YAxis tick={{ fill: "#333", fontSize: 10 }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{ background: "#0A0A14", border: "1px solid #E8003D", fontFamily: "'Courier New',monospace", fontSize: "11px" }}
-              labelStyle={{ color: "#fff", fontWeight: "700", marginBottom: "4px" }}
-              formatter={(val, name) => [m.fmt(val), name]}
-            />
-            <Legend wrapperStyle={{ fontSize: "10px", fontFamily: "'Courier New',monospace", color: "#555" }} />
-            {Object.entries(MODEL_COLORS).map(([name, color]) => (
-              <Bar key={name} dataKey={name} fill={color} maxBarSize={18} shape={<CustomBar dataKey={name} />} />
+            <div style={{ alignSelf: "flex-start", padding: "8px 10px", background: "#11111D", border: "1px solid #1A1A2A" }}>
+              <div style={{ fontSize: "8px", color: "#555", letterSpacing: "2px", marginBottom: "4px" }}>ACTIVE MODE</div>
+              <div style={{ fontSize: "10px", color: "#fff", fontWeight: "700" }}>{liveFeatures.length || 10} FEATURES</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {liveFeatures.map((feature) => (
+              <div key={feature} style={{ fontSize: "9px", color: "#BBB", padding: "6px 9px", border: "1px solid #1A1A2A", background: "#0E0E1A" }}>
+                {feature.replace(/_/g, " ")}
+              </div>
             ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: "3px", marginBottom: "20px", overflowX: "auto" }}>
-        {data.map((d) => {
-          const borderColor = d.test_year === 2022 ? "#E8003D" : d.test_year === 2026 ? "#3671C6" : "#FF6B00"
-          return (
-            <div key={d.test_year} style={{ background: "#0A0A14", border: d.test_year === 2022 ? "1px solid #E8003D33" : "1px solid #1A1A2A", borderTop: `3px solid ${borderColor}`, padding: "12px", minWidth: "100px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-                <div style={{ fontSize: "16px", fontWeight: "900", color: "#fff", fontFamily: "Georgia,serif" }}>{d.test_year}</div>
-                {d.test_year === 2022 && <div style={{ fontSize: "6px", color: "#E8003D", background: "#E8003D15", padding: "2px 4px" }}>REG RESET</div>}
-                {d.test_year === 2026 && <div style={{ fontSize: "6px", color: "#3671C6", background: "#3671C615", padding: "2px 4px" }}>2 RACES</div>}
+          </div>
+        </div>
+      </Reveal>
+      <Reveal>
+        <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "18px", marginBottom: "18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "14px" }}>
+            <div>
+              <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "6px" }}>AVERAGE PERFORMANCE BY METHOD</div>
+              <div style={{ fontSize: "12px", color: "#666", lineHeight: "1.7", maxWidth: "720px" }}>
+                Average performance for each method on the active profile's benchmark window. This lets you compare the same four models under whichever objective the user selected.
               </div>
-              {[
-                {label:"BASE",val:d.baseline[metric],color:"#4488FF"},
-                {label:"XGB",val:d.xgboost[metric],color:"#E8003D"},
-                {label:"ENS-W",val:d.ensemble_winner?.[metric],color:"#FFD700"},
-                {label:"ENS-P",val:d.ensemble_position?.[metric],color:"#00A550"},
-              ].map((row) => (
-                <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                  <div style={{ fontSize: "8px", color: "#444" }}>{row.label}</div>
-                  <div style={{ fontSize: "9px", color: row.color, fontWeight: "700" }}>{m.fmt(row.val)}</div>
+            </div>
+            <div style={{ fontSize: "10px", color: "#444", letterSpacing: "2px", alignSelf: "flex-start" }}>
+              {benchmarkYears.length > 0 ? benchmarkYears.join(" • ") : "TOP FEATURE SET, AVERAGED"}
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: "10px" }}>
+            {averageOverallStats.map((model) => (
+              <div key={model.key} style={{ background: "#0E0E1A", border: "1px solid #1A1A2A", borderTop: `3px solid ${model.color}`, padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: model.color, marginBottom: "4px" }}>{model.label}</div>
+                    <div style={{ fontSize: "9px", color: "#555", lineHeight: "1.5" }}>{model.desc}</div>
+                  </div>
+                  <div style={{ fontSize: "8px", color: "#333", letterSpacing: "2px" }}>{model.short}</div>
                 </div>
-              ))}
-              <div style={{ marginTop: "6px", fontSize: "7px", color: "#333" }}>
-                αW={d.best_alpha_winner ?? d.best_alpha ?? "-"} αP={d.best_alpha_position ?? "-"}
+                {SUMMARY_METRICS.map((metricKey) => (
+                  <div key={metricKey} style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
+                    <div style={{ fontSize: "9px", color: "#666" }}>{METRICS[metricKey].label}</div>
+                    <div style={{ fontSize: "10px", color: "#fff", fontWeight: "700" }}>
+                      {model.stats[metricKey] === null ? "n/a" : METRICS[metricKey].fmt(model.stats[metricKey])}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          )
-        })}
-      </div>
-      <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "14px", marginBottom: "12px" }}>
-        <div style={{ fontSize: "9px", color: "#444", letterSpacing: "2px", marginBottom: "10px" }}>MODEL KEY</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "10px" }}>
-          {[
-            {color:"#4488FF",name:"Ridge Baseline",desc:"Linear — stable, conservative"},
-            {color:"#E8003D",name:"XGBoost",desc:"300 decision trees — non-linear patterns"},
-            {color:"#FFD700",name:"Ensemble (Winner)",desc:"Winner-optimized blend — used in SIMULATE RACE ★"},
-            {color:"#00A550",name:"Ensemble (Position)",desc:"Spearman-optimized — best full grid ranking"},
-          ].map((mKey) => (
-            <div key={mKey.name} style={{ padding: "10px", background: "#0E0E1A", borderLeft: `2px solid ${mKey.color}55` }}>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: mKey.color, marginBottom: "4px" }}>{mKey.name}</div>
-              <div style={{ fontSize: "9px", color: "#555", lineHeight: "1.5" }}>{mKey.desc}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-      <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "18px" }}>
-        <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "14px" }}>METRIC GLOSSARY</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "10px" }}>
-          {[
-            {name:"Winner Accuracy",color:"#E8003D",desc:"% of races where the predicted P1 driver actually won."},
-            {name:"Podium Accuracy",color:"#00A550",desc:"% of races where all 3 predicted podium drivers matched P1/P2/P3 exactly."},
-            {name:"Spearman Rank",color:"#4488FF",desc:"Correlation of predicted vs actual order all 20 drivers. 1.0 = perfect."},
-            {name:"MAE",color:"#27F4D2",desc:"Mean Absolute Error in positions. Lower is better."},
-            {name:"NDCG",color:"#FF6B00",desc:"Like Spearman but top positions matter more. Missing P1 hurts more than missing P17."},
-            {name:"Within 3 Positions",color:"#AAA",desc:"% of predictions landing within 3 positions of reality."},
-          ].map((g) => (
-            <div key={g.name} style={{ padding: "10px", background: "#0E0E1A", borderLeft: `2px solid ${g.color}44` }}>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: g.color, marginBottom: "4px" }}>{g.name}</div>
-              <div style={{ fontSize: "10px", color: "#CCC", lineHeight: "1.6" }}>{g.desc}</div>
-            </div>
-          ))}
+      </Reveal>
+      <Reveal>
+        <div style={{ marginBottom: "12px" }}>
+          <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "10px" }}>BY YEAR BREAKDOWN</div>
+          <div style={{ display: "flex", gap: "2px", flexWrap: "wrap" }}>
+            {Object.entries(METRICS).map(([key]) => (
+              <button
+                key={key}
+                onClick={() => setMetric(key)}
+                style={{
+                  background: metric === key ? "#1A1A2A" : "transparent",
+                  border: `1px solid ${metric === key ? "#E8003D" : "#1A1A2A"}`,
+                  color: metric === key ? "#fff" : "#444",
+                  padding: "6px 14px",
+                  cursor: "pointer",
+                  fontFamily: "'Courier New',monospace",
+                  fontSize: "9px",
+                  fontWeight: "700",
+                  letterSpacing: "1px",
+                }}
+              >
+                {key.replace(/_/g, " ").toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
+      </Reveal>
+      <Reveal>
+        <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "20px", marginBottom: "16px" }}>
+          <div style={{ fontSize: "9px", color: "#444", letterSpacing: "3px", marginBottom: "16px" }}>
+            {m.label.toUpperCase()} — ALL 4 MODELS BY SEASON
+            <span style={{ color: "#333", fontSize: "8px" }}> (2022 XGBoost faded = concept drift)</span>
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={chartData} margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
+              <CartesianGrid stroke="#1A1A2A" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="year" tick={{ fill: "#555", fontSize: 11 }} axisLine={{ stroke: "#1A1A2A" }} tickLine={false} />
+              <YAxis tick={{ fill: "#333", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: "#0A0A14", border: "1px solid #E8003D", fontFamily: "'Courier New',monospace", fontSize: "11px" }}
+                labelStyle={{ color: "#fff", fontWeight: "700", marginBottom: "4px" }}
+                formatter={(val, name) => [m.fmt(val), name]}
+              />
+              <Legend wrapperStyle={{ fontSize: "10px", fontFamily: "'Courier New',monospace", color: "#555" }} />
+              {Object.entries(MODEL_COLORS).map(([name, color]) => (
+                <Bar key={name} dataKey={name} fill={color} maxBarSize={18} shape={<CustomBar dataKey={name} />} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Reveal>
+      <Reveal>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: "3px", marginBottom: "20px", overflowX: "auto" }}>
+          {data.map((d) => {
+            const borderColor = d.test_year === 2022 ? "#E8003D" : d.test_year === 2026 ? "#3671C6" : "#FF6B00"
+            return (
+              <div key={d.test_year} style={{ background: "#0A0A14", border: d.test_year === 2022 ? "1px solid #E8003D33" : "1px solid #1A1A2A", borderTop: `3px solid ${borderColor}`, padding: "12px", minWidth: "100px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                  <div style={{ fontSize: "16px", fontWeight: "900", color: "#fff", fontFamily: "Georgia,serif" }}>{d.test_year}</div>
+                  {d.test_year === 2022 && <div style={{ fontSize: "6px", color: "#E8003D", background: "#E8003D15", padding: "2px 4px" }}>REG RESET</div>}
+                  {d.test_year === 2026 && <div style={{ fontSize: "6px", color: "#3671C6", background: "#3671C615", padding: "2px 4px" }}>2 RACES</div>}
+                </div>
+                {[
+                  {label:"BASE",val:d.baseline[metric],color:"#4488FF"},
+                  {label:"XGB",val:d.xgboost[metric],color:"#E8003D"},
+                  {label:"ENS-W",val:d.ensemble_winner?.[metric],color:"#FFD700"},
+                  {label:"ENS-P",val:d.ensemble_position?.[metric],color:"#00A550"},
+                ].map((row) => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+                    <div style={{ fontSize: "8px", color: "#444" }}>{row.label}</div>
+                    <div style={{ fontSize: "9px", color: row.color, fontWeight: "700" }}>{m.fmt(row.val)}</div>
+                  </div>
+                ))}
+                <div style={{ marginTop: "6px", fontSize: "7px", color: "#333" }}>
+                  αW={d.best_alpha_winner ?? d.best_alpha ?? "-"} αP={d.best_alpha_position ?? "-"}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </Reveal>
+      <Reveal>
+        <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "14px", marginBottom: "12px" }}>
+          <div style={{ fontSize: "9px", color: "#444", letterSpacing: "2px", marginBottom: "10px" }}>MODEL KEY</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "10px" }}>
+            {[
+              {color:"#4488FF",name:"Ridge Baseline",desc:"Linear — stable, conservative"},
+              {color:"#E8003D",name:"XGBoost",desc:"300 decision trees — non-linear patterns"},
+              {color:"#FFD700",name:"Ensemble (Winner)",desc:"Winner-optimized blend — used in SIMULATE RACE ★"},
+              {color:"#00A550",name:"Ensemble (Position)",desc:"Spearman-optimized — best full grid ranking"},
+            ].map((mKey) => (
+              <div key={mKey.name} style={{ padding: "10px", background: "#0E0E1A", borderLeft: `2px solid ${mKey.color}55` }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: mKey.color, marginBottom: "4px" }}>{mKey.name}</div>
+                <div style={{ fontSize: "9px", color: "#555", lineHeight: "1.5" }}>{mKey.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+      <Reveal>
+        <div style={{ background: "#0A0A14", border: "1px solid #1A1A2A", padding: "18px" }}>
+          <div style={{ fontSize: "9px", color: "#CCC", letterSpacing: "3px", marginBottom: "14px" }}>METRIC GLOSSARY</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "10px" }}>
+            {[
+              {name:"Winner Accuracy",color:"#E8003D",desc:"% of races where the predicted P1 driver actually won."},
+              {name:"Podium Accuracy",color:"#00A550",desc:"% of races where all 3 predicted podium drivers matched P1/P2/P3 exactly."},
+              {name:"Spearman Rank",color:"#4488FF",desc:"Correlation of predicted vs actual order all 20 drivers. 1.0 = perfect."},
+              {name:"MAE",color:"#27F4D2",desc:"Mean Absolute Error in positions. Lower is better."},
+              {name:"NDCG",color:"#FF6B00",desc:"Like Spearman but top positions matter more. Missing P1 hurts more than missing P17."},
+              {name:"Within 3 Positions",color:"#AAA",desc:"% of predictions landing within 3 positions of reality."},
+            ].map((g) => (
+              <div key={g.name} style={{ padding: "10px", background: "#0E0E1A", borderLeft: `2px solid ${g.color}44` }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: g.color, marginBottom: "4px" }}>{g.name}</div>
+                <div style={{ fontSize: "10px", color: "#CCC", lineHeight: "1.6" }}>{g.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
       </div>
     </div>
   )
@@ -490,11 +564,13 @@ const HOOD_SECTIONS = [
 ]
 
 const UnderTheHoodPage = () => (
-  <div style={{ padding: "28px 32px", animation: "fadeUp 0.3s ease" }}>
-    <div style={{ marginBottom: "26px" }}>
+  <div>
+    <AnalyticsHero>
       <div style={{ fontSize: "8px", letterSpacing: "5px", color: "#fff", marginBottom: "6px" }}>TECHNICAL DEEP DIVE</div>
       <div style={{ fontSize: "28px", fontWeight: "900", fontFamily: "Georgia,serif" }}>Under The Hood</div>
-    </div>
+      <div style={{ fontSize: "11px", color: "#666", marginTop: "6px" }}>How the prediction engine actually works — models, features, data, and limitations</div>
+    </AnalyticsHero>
+    <div style={{ padding: "28px 32px" }}>
 
     <div className="hood-layout">
       <div className="hood-sidebar" style={{ position: "sticky", top: "76px", alignSelf: "flex-start" }}>
@@ -669,8 +745,179 @@ const UnderTheHoodPage = () => (
         </section>
       </div>
     </div>
+    </div>
   </div>
 )
+
+const RaceSimulator = ({ results }) => {
+  const [phase, setPhase] = useState("idle")
+  const slRef = useRef(null)
+  const timerRef = useRef(null)
+  useEffect(() => () => clearTimeout(timerRef.current), [])
+
+  const simulate = () => {
+    if (phase === "running") return
+    setPhase("running")
+    const c = slRef.current
+    if (c) {
+      c.innerHTML = ""
+      for (let i = 0; i < 22; i++) {
+        const el = document.createElement("div")
+        el.className = "sline"
+        el.style.cssText = `top:${Math.random() * 100}%;width:${40 + Math.random() * 140}px;animation-duration:${0.18 + Math.random() * 0.35}s;animation-delay:${-Math.random() * 0.5}s;opacity:${0.12 + Math.random() * 0.32};`
+        c.appendChild(el)
+      }
+    }
+    timerRef.current = setTimeout(() => { setPhase("done"); if (c) c.innerHTML = "" }, 4200)
+  }
+
+  const reset = () => { clearTimeout(timerRef.current); setPhase("idle") }
+  const active = phase !== "idle"
+  const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
+
+  return (
+    <div className="sim-shell">
+      <div className="sim-speedlines" ref={slRef} />
+      <div className="sim-header">
+        <div>
+          <div style={{ fontSize: "9px", color: "#E8003D", letterSpacing: "3px" }}>RACE SIMULATION</div>
+          <div style={{ fontSize: "11px", color: "#555", marginTop: "3px" }}>
+            {phase === "idle" ? "Animate predicted finishing positions from grid" : phase === "running" ? "Lights out and away we go..." : "Chequered flag — predicted result"}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={simulate} disabled={phase === "running"} className="sim-btn" style={{ opacity: phase === "running" ? 0.5 : 1 }}>
+            {phase === "idle" ? "▶ SIMULATE" : phase === "running" ? "RACING..." : "▶ REPLAY"}
+          </button>
+          {phase !== "idle" && <button onClick={reset} className="sim-btn-ghost">RESET</button>}
+        </div>
+      </div>
+      <div className="sim-lanes">
+        {gridOrder.map((driver, i) => {
+          const finishPos = results.findIndex(r => r.driver === driver.driver) + 1
+          const tc = TEAM_COLORS[driver.team] || "#888"
+          const startPct = 4 + (20 - driver.grid) * 0.3
+          const finishPct = 95 - (finishPos - 1) * 3.5
+          return (
+            <div key={driver.driver} className="sim-lane">
+              <div className="sim-lane-label">
+                <span style={{ color: "#2A2A3A" }}>G{driver.grid}</span> {surname(driver.driver)}
+              </div>
+              <div className="sim-lane-track">
+                <div
+                  className="sim-car-fill"
+                  style={{
+                    width: active ? `${finishPct}%` : `${startPct}%`,
+                    background: `linear-gradient(90deg,${tc}20,${tc}70)`,
+                    borderRight: `3px solid ${tc}`,
+                    transition: active ? `width 2.6s cubic-bezier(0.2,0.8,0.4,1) ${i * 0.07}s` : "width 0.1s",
+                  }}
+                />
+              </div>
+              {phase === "done" && (
+                <div style={{ fontSize: "9px", color: tc, fontWeight: "900", width: "22px", textAlign: "right", flexShrink: 0, fontFamily: "Georgia,serif" }}>P{finishPos}</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
+
+function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, sel }) {
+  const frameRef = useRef(null)
+  const flashRef = useRef(null)
+
+  /* Generate speed lines & dust motes once on mount — mirrors the reference JS */
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame) return
+
+    const speedlinesEl = frame.querySelector(".speedlines")
+
+    return () => {
+      while (speedlinesEl.firstChild) speedlinesEl.removeChild(speedlinesEl.firstChild)
+    }
+  }, [])
+
+  const imgStyle = { "--img": `url("${IMG_URL}")` }
+
+  return (
+    <div className="stage">
+      <div className="frame" ref={frameRef} style={imgStyle}>
+        <div className="layer sharp" style={imgStyle} />
+        <div className="layer ghost g1" style={imgStyle} />
+        <div className="layer ghost g2" style={imgStyle} />
+        <div className="layer ghost g3" style={imgStyle} />
+        <div className="speedlines" />
+        <div className="vignette" />
+        <div className="speedflash" ref={flashRef} />
+        <div style={{ position: "absolute", bottom: 0, right: 0, width: "160px", height: "160px", background: "linear-gradient(135deg, transparent 0%, transparent 40%, #090810 60%, #090810 100%)", zIndex: 10 }} />
+      </div>
+
+      {/* Selector overlaid directly on the image — no background box */}
+      <div className="controls">
+        <div style={{ marginBottom: "14px" }}>
+          <div style={{ fontSize: "7px", color: "#E8003D", letterSpacing: "5px", marginBottom: "3px" }}>SELECT RACE</div>
+          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)" }}>
+            {modelStats?.profile_label || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.label}
+            {" "}·{" "}
+            {modelStats?.profile_description || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.description}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px" }}>YEAR</span>
+            <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} style={sel}>
+              {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
+            </select>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px" }}>CIRCUIT</span>
+            <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} style={{ ...sel, flex: 1, minWidth: "220px" }}>
+              {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
+            </select>
+          </div>
+          <button
+            onClick={predict}
+            disabled={loading || !selectedRaceKey}
+            style={{
+              background: "linear-gradient(135deg,#E8003D 0%,#B80030 100%)",
+              border: "none", color: "#fff",
+              padding: "10px 28px", fontSize: "11px", fontWeight: "700",
+              letterSpacing: "2px", cursor: loading || !selectedRaceKey ? "not-allowed" : "pointer",
+              fontFamily: "'Courier New',monospace", opacity: loading || !selectedRaceKey ? 0.5 : 1,
+              boxShadow: "0 0 24px rgba(232,0,61,0.4)",
+            }}
+          >
+            ▶ PREDICT RACE
+          </button>
+        </div>
+        {error && (
+          <div style={{ marginTop: "10px", padding: "10px 14px", background: "rgba(20,9,13,0.85)", border: "1px solid #E8003D55", borderLeft: "3px solid #E8003D", fontSize: "11px", color: "#F6C3D0" }}>
+            {error}
+          </div>
+        )}
+        <div className="hero-stat-chips">
+          {[
+            {label:"2016 WINNER ACC",val:"66.7%",color:"#4488FF"},
+            {label:"2023 WINNER ACC",val:"86.4%",color:"#00A550"},
+            {label:"2024 SPEARMAN",val:"0.763",color:"#FFD700"},
+            {label:"2024 MAE",val:"2.90p",color:"#FF6B00"},
+          ].map((s) => (
+            <div key={s.label} className="hero-stat-chip" style={{ "--chip-color": s.color }}>
+              <div style={{ fontSize: "7px", color: "rgba(255,255,255,0.45)", letterSpacing: "1px" }}>{s.label}</div>
+              <div style={{ fontSize: "18px", fontWeight: "900", color: s.color, fontFamily: "Georgia,serif", marginTop: "2px" }}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function App() {
   const [page, setPage] = useState("predict")
@@ -823,7 +1070,7 @@ export default function App() {
 
   return (
     <div className="app-shell" style={{ background: "#05050E", minHeight: "100vh", fontFamily: "'Courier New',monospace", color: "#E0E0E0" }}>
-      <div style={{ background: "#09091A", borderBottom: "2px solid #E8003D", padding: "0 32px", display: "flex", alignItems: "center", minHeight: "58px", gap: "0", position: "sticky", top: 0, zIndex: 100, flexWrap: "wrap" }}>
+      <div style={{ background: "linear-gradient(180deg,#0D0C1E 0%,#080710 100%)", borderBottom: "1px solid rgba(232,0,61,0.45)", boxShadow: "0 2px 48px rgba(120,0,22,0.38)", padding: "0 32px", display: "flex", alignItems: "center", minHeight: "58px", gap: "0", position: "sticky", top: 0, zIndex: 100, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "28px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
             <div style={{ width: "18px", height: "2px", background: "#E8003D" }} />
@@ -889,104 +1136,77 @@ export default function App() {
       {page === "hood" && <UnderTheHoodPage />}
 
       {page === "predict" && (
-        <div style={{ padding: "24px 32px" }}>
-          {!loading && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                padding: "20px 24px",
-                marginBottom: "24px",
-                background: "#0A0A14",
-                border: "1px solid #1A1A2A",
-                borderLeft: "3px solid #E8003D",
-                flexWrap: "wrap",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "7px", color: "#E8003D", letterSpacing: "4px", marginBottom: "4px" }}>SIMULATE RACE</div>
-                <div style={{ fontSize: "13px", fontWeight: "900", color: "#fff", fontFamily: "Georgia,serif" }}>Select Year + Circuit</div>
-                <div style={{ fontSize: "10px", color: "#888", marginTop: "5px", lineHeight: "1.6" }}>
-                  Active profile: <span style={{ color: "#fff", fontWeight: "700" }}>{modelStats?.profile_label || MODEL_PROFILES.find((profile) => profile.key === selectedProfile)?.label}</span>
-                  {" "}• {modelStats?.profile_description || MODEL_PROFILES.find((profile) => profile.key === selectedProfile)?.description}
+        <>
+          {/* ── LOADING ── */}
+          {loading && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "65vh" }}>
+              <RaceCarLoader />
+            </div>
+          )}
+
+          {/* ── HERO — exact Zooming Audi port ── */}
+          {!loading && !results && (
+            <HeroStage
+              years={years}
+              selectedYear={selectedYear}
+              setYear={setYear}
+              raceOptions={raceOptions}
+              selectedRaceKey={selectedRaceKey}
+              setSelectedRaceKey={setSelectedRaceKey}
+              predict={predict}
+              loading={loading}
+              modelStats={modelStats}
+              selectedProfile={selectedProfile}
+              error={error}
+              sel={sel}
+            />
+          )}
+
+          {/* ── RESULTS view ── */}
+          {!loading && results && (
+            <div style={{ padding: "24px 32px", animation: "fadeUp 0.3s ease" }}>
+
+              {/* Compact selector bar */}
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px 20px", marginBottom: "24px", background: "#08081A", border: "1px solid #1A1A2A", borderLeft: "3px solid #E8003D", flexWrap: "wrap", boxShadow: "0 0 30px rgba(100,0,18,0.15)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "8px", color: "#666", letterSpacing: "2px" }}>YEAR</span>
+                  <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} style={sel}>
+                    {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
+                  </select>
                 </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "8px" }}>
-                <span style={{ fontSize: "8px", color: "#CCC", letterSpacing: "2px" }}>YEAR</span>
-                <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} style={sel}>
-                  {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
-                </select>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "8px", color: "#CCC", letterSpacing: "2px" }}>CIRCUIT</span>
-                <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} style={{ ...sel, minWidth: "260px" }}>
-                  {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " (Future)" : ""}</option>)}
-                </select>
-              </div>
-              <button
-                onClick={predict}
-                disabled={loading || !selectedRaceKey}
-                style={{
-                  background: "linear-gradient(135deg,#E8003D 0%,#B80030 100%)",
-                  border: "none",
-                  color: "#fff",
-                  padding: "10px 28px",
-                  fontSize: "11px",
-                  fontWeight: "700",
-                  letterSpacing: "2px",
-                  cursor: "pointer",
-                  fontFamily: "'Courier New',monospace",
-                  transition: "all 0.15s",
-                }}
-              >
-                ▶ PREDICT RACE
-              </button>
-              {results && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "8px", color: "#666", letterSpacing: "2px" }}>CIRCUIT</span>
+                  <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} style={{ ...sel, minWidth: "260px" }}>
+                    {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
+                  </select>
+                </div>
+                <button
+                  onClick={predict}
+                  disabled={loading || !selectedRaceKey}
+                  style={{
+                    background: "linear-gradient(135deg,#E8003D 0%,#B80030 100%)",
+                    border: "none", color: "#fff",
+                    padding: "10px 28px", fontSize: "11px", fontWeight: "700",
+                    letterSpacing: "2px", cursor: "pointer",
+                    fontFamily: "'Courier New',monospace", transition: "all 0.15s",
+                  }}
+                >
+                  ▶ PREDICT RACE
+                </button>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-                  <span style={{ fontSize: "8px", color: "#CCC", letterSpacing: "1px" }}>SHOW ACTUAL</span>
+                  <span style={{ fontSize: "8px", color: "#555", letterSpacing: "1px" }}>SHOW ACTUAL</span>
                   <div onClick={() => setShowActual(!showActual)} style={{ width: "28px", height: "14px", background: showActual ? "#E8003D" : "#1A1A2A", borderRadius: "7px", position: "relative", transition: "background 0.2s", cursor: "pointer" }}>
                     <div style={{ position: "absolute", top: "2px", left: showActual ? "15px" : "2px", width: "10px", height: "10px", background: "#fff", borderRadius: "50%", transition: "left 0.2s" }} />
                   </div>
                 </div>
+              </div>
+
+              {error && (
+                <div style={{ padding: "12px 16px", marginBottom: "16px", background: "#14090D", border: "1px solid #E8003D55", borderLeft: "3px solid #E8003D", fontSize: "11px", color: "#F6C3D0" }}>
+                  {error}
+                </div>
               )}
-            </div>
-          )}
 
-          {!loading && error && (
-            <div style={{ padding: "12px 16px", marginBottom: "16px", background: "#14090D", border: "1px solid #E8003D55", borderLeft: "3px solid #E8003D", fontSize: "11px", color: "#F6C3D0" }}>
-              {error}
-            </div>
-          )}
-
-          {loading && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "65vh" }}><RaceCarLoader /></div>}
-
-          {!loading && !results && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "55vh", gap: "20px", animation: "fadeUp 0.4s ease" }}>
-              <div style={{ fontSize: "52px" }}>🏁</div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "9px", letterSpacing: "6px", color: "#E8003D", marginBottom: "8px" }}>SELECT YEAR + CIRCUIT ABOVE AND PRESS PREDICT</div>
-                <div style={{ fontSize: "22px", fontWeight: "900", fontFamily: "Georgia,serif" }}>Simulate Any F1 Race</div>
-                <div style={{ fontSize: "11px", color: "#CCC", marginTop: "6px" }}>2015-2026 race data | notebook-aligned prediction pipeline</div>
-              </div>
-              <div style={{ display: "flex", gap: "3px", marginTop: "8px", flexWrap: "wrap", justifyContent: "center" }}>
-                {[
-                  {label:"2016 WINNER ACC",val:"66.7%",color:"#4488FF"},
-                  {label:"2023 WINNER ACC",val:"86.4%",color:"#00A550"},
-                  {label:"2024 SPEARMAN",val:"0.763",color:"#FFD700"},
-                  {label:"2024 MAE",val:"2.90p",color:"#FF6B00"},
-                ].map((s) => (
-                  <div key={s.label} style={{ padding: "12px 18px", textAlign: "center", background: "#0A0A14", borderTop: `2px solid ${s.color}` }}>
-                    <div style={{ fontSize: "7px", color: "#CCC", letterSpacing: "1px" }}>{s.label}</div>
-                    <div style={{ fontSize: "22px", fontWeight: "900", color: s.color, fontFamily: "Georgia,serif" }}>{s.val}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!loading && results && (
-            <div style={{ animation: "fadeUp 0.3s ease" }}>
               {isFuture && (
                 <div style={{ padding: "12px 16px", marginBottom: "16px", background: "#0A0A1A", border: "1px solid #3671C644", borderLeft: "3px solid #3671C6", display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{ fontSize: "10px", color: "#3671C6", fontWeight: "900", letterSpacing: "2px" }}>FUT</div>
@@ -996,6 +1216,7 @@ export default function App() {
                   </div>
                 </div>
               )}
+
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "22px" }}>
                 <div>
                   <div style={{ fontSize: "8px", color: "#E8003D", letterSpacing: "5px", marginBottom: "3px" }}>{raceInfo?.year} FORMULA ONE{isFuture ? " — PREDICTED" : ""}</div>
@@ -1021,6 +1242,7 @@ export default function App() {
                   </div>
                 )}
               </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "24px", alignItems: "start" }}>
                 <div>
                   <Podium results={results} />
@@ -1056,9 +1278,10 @@ export default function App() {
                   {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
                 </div>
               </div>
+              <RaceSimulator results={results} />
             </div>
           )}
-        </div>
+        </>
       )}
 
       <div style={{ borderTop: "1px solid #0C0C18", padding: "10px 32px", display: "flex", justifyContent: "space-between", fontSize: "8px", color: "#1A1A2A", letterSpacing: "2px", marginTop: "40px" }}>
