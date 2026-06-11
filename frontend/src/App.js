@@ -470,6 +470,86 @@ const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
           </div>
         </div>
       </Reveal>
+      <Reveal delay={0.05}>
+        <div className="card" style={{ borderLeft: "3px solid var(--blue)" }}>
+          <div className="card-label" style={{ marginBottom: "16px" }}>WHY THESE BENCHMARK YEARS SELECTED THIS MODEL</div>
+          <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "16px", borderLeft: "3px solid var(--border-strong)" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>Two different things: full analytics vs feature-search benchmark</div>
+            <div className="prose" style={{ fontSize: "12px" }}>
+              The bar chart above shows rolling evaluation across <strong>2016–2026</strong> — the full historical record of how each model performs year by year, trained on all prior seasons.
+              That is separate from the <strong>feature search benchmark</strong>, which evaluated only <strong>2022–2024</strong> to decide which feature set and ensemble blend to use live.
+              The feature search deliberately used recent years only, because patterns from 2016 or 2019 are less representative of how current F1 cars behave.
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", marginBottom: "20px" }}>
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>Why 2022–2024 for Model Selection</div>
+              <div className="prose">
+                The feature search used a strict temporal split: train on all data up to year N−1, predict year N — the same process used when the model runs live. Three years was chosen over the full 2016–2026 range because recent seasons dominate the signal. A feature that worked well in 2017 but not 2023 should not influence today's live predictions.
+                <br /><br />
+                These three years also cover structurally different F1 dynamics, making the selection robust rather than tuned to one type of season.
+              </div>
+              <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[
+                  { year: "2022", tag: "REG RESET", color: "#E8003D", desc: "New ground-effect rules broke historical team-strength assumptions almost overnight. XGBoost (50.0% winner acc) underperformed Ridge (54.5%) — its learned patterns expired faster." },
+                  { year: "2023", tag: "DOMINANT", color: "#FF8000", desc: "Red Bull dominance made the race highly predictable from qualifying pace. Both models scored well, with Ridge reaching 86.4% winner accuracy." },
+                  { year: "2024", tag: "COMPETITIVE", color: "#3671C6", desc: "Multi-team fight at the front. Harder to separate P1–P4 on pre-race signals alone. Separating the top four required richer non-linear features." },
+                ].map((r) => (
+                  <div key={r.year} style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "6px", borderLeft: `3px solid ${r.color}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
+                      <span className="num" style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>{r.year}</span>
+                      <span style={{ fontSize: "8px", color: r.color, background: `${r.color}18`, padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px" }}>{r.tag}</span>
+                    </div>
+                    <div className="prose" style={{ fontSize: "12px" }}>{r.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>Why the Blend Beat Either Solo Model</div>
+              <div className="prose" style={{ marginBottom: "14px" }}>
+                Ridge and XGBoost have complementary failure modes across these three seasons. Ridge is stable but misses the non-linear interaction patterns that separate close competitors. XGBoost captures those interactions but is more sensitive to concept drift when regulations change.
+                <br /><br />
+                The ensemble search tested every alpha blend (Ridge weight 0.0 → 1.0) on each test year. The optimal mix varies by year and by objective — which is why the two profiles use different alpha values and even different feature sets.
+              </div>
+              <div style={{ padding: "14px", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "12px" }}>
+                <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "2px", marginBottom: "10px" }}>WINNER PROFILE RESULT</div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Winner) avg winner acc</span>
+                  <span className="num" style={{ fontWeight: "700", color: "#FFD700" }}>70.8%</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Winner) avg spearman</span>
+                  <span className="num" style={{ fontWeight: "700", color: "#FFD700" }}>0.670</span>
+                </div>
+                <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "8px", lineHeight: "1.6" }}>
+                  Optimized for P1 hit rate. Selects features like quali_gap, driver_form, circuit_overperformance, and starting_compound — signals that identify who is fastest <em>this specific weekend</em>.
+                </div>
+              </div>
+              <div style={{ padding: "14px", background: "var(--surface-2)", borderRadius: "6px" }}>
+                <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "2px", marginBottom: "10px" }}>FULL ORDER PROFILE RESULT</div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Position) avg spearman</span>
+                  <span className="num" style={{ fontWeight: "700", color: "#00A550" }}>0.684</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <span className="prose" style={{ fontSize: "12px" }}>Ensemble (Position) avg winner acc</span>
+                  <span className="num" style={{ fontWeight: "700", color: "#00A550" }}>49.0%</span>
+                </div>
+                <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "8px", lineHeight: "1.6" }}>
+                  Optimized for full-grid ranking quality. Leans on team_win_rate, constructor_rank_norm, circuit history — long-run competitive position signals. Wins fewer P1 calls but places the whole grid more accurately.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: "14px", background: "var(--surface-3)", borderRadius: "6px", borderTop: "2px solid var(--border-strong)" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#fff", marginBottom: "5px" }}>The Core Tradeoff</div>
+            <div className="prose" style={{ fontSize: "12px" }}>
+              Winner-Centric hits P1 70.8% of the time but ranks the whole grid at 0.670 Spearman. Full Finishing Order ranks the grid at 0.684 Spearman but only identifies the winner 49% of the time. You cannot simultaneously maximize both — optimizing for who wins requires different features and blend weights than optimizing for the complete classification.
+            </div>
+          </div>
+        </div>
+      </Reveal>
       <Reveal>
         <div style={{ marginBottom: "14px" }}>
           <div className="card-label">BY YEAR BREAKDOWN</div>
