@@ -91,24 +91,24 @@ const rafThrottle = (fn) => {
 const ScrollProgress = () => {
   const barRef = useRef(null)
   useEffect(() => {
-    // Cache the scrollable height; only recompute on resize, not per scroll.
-    let max = document.documentElement.scrollHeight - window.innerHeight
     const update = () => {
       const bar = barRef.current
       if (!bar) return
+      const max = document.documentElement.scrollHeight - window.innerHeight
       bar.style.width = max > 0 ? `${(window.scrollY / max) * 100}%` : "0%"
     }
     const onScroll = rafThrottle(update)
-    const onResize = rafThrottle(() => {
-      max = document.documentElement.scrollHeight - window.innerHeight
-      update()
-    })
     update()
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onResize)
+    window.addEventListener("resize", onScroll)
+    // Page height also changes on tab switch / content load with no scroll
+    // event — observe the body so the bar stays in sync.
+    const observer = new ResizeObserver(onScroll)
+    observer.observe(document.body)
     return () => {
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onResize)
+      window.removeEventListener("resize", onScroll)
+      observer.disconnect()
     }
   }, [])
   return <div className="scroll-progress" ref={barRef} />
