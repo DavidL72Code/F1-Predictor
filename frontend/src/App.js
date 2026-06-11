@@ -52,6 +52,27 @@ const expectArray = (value, label) => {
   return value
 }
 
+/* In-memory cache of GET responses, keyed by URL. De-dupes concurrent
+   requests (stores the promise) so toggling profiles or revisiting a page
+   reuses the already-loaded data instead of refetching and flickering. */
+const responseCache = new Map()
+const cachedJson = (url) => {
+  if (responseCache.has(url)) return responseCache.get(url)
+  const promise = fetch(url)
+    .then(async (r) => {
+      if (!r.ok) {
+        throw new Error(await readErrorMessage(r, `Request failed with status ${r.status}`))
+      }
+      return r.json()
+    })
+    .catch((err) => {
+      responseCache.delete(url) // let a failed request retry next time
+      throw err
+    })
+  responseCache.set(url, promise)
+  return promise
+}
+
 /* ── Scroll progress bar across the top of the viewport ── */
 const ScrollProgress = () => {
   const barRef = useRef(null)
@@ -997,6 +1018,13 @@ export default function App() {
   const [isFuture, setIsFuture] = useState(false)
   const [futureNote, setFutureNote] = useState("")
   const [error, setError] = useState("")
+  // Pages stay mounted once visited, so switching back is instant and keeps
+  // scroll position + in-page state instead of remounting and refetching.
+  const [visited, setVisited] = useState({ predict: true })
+
+  useEffect(() => {
+    setVisited((v) => (v[page] ? v : { ...v, [page]: true }))
+  }, [page])
 
   useEffect(() => {
     const pingBackend = () => {
@@ -1012,15 +1040,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    fetch(`${API}/races`)
-      .then((r) => {
-        if (!r.ok) {
-          return readErrorMessage(r, `Race list request failed with status ${r.status}`).then((message) => {
-            throw new Error(message)
-          })
-        }
-        return r.json()
-      })
+    cachedJson(`${API}/races`)
       .then((data) => {
         const raceList = expectArray(data, "Race list")
         setRaces(raceList)
@@ -1038,24 +1058,22 @@ export default function App() {
         setError(err.message || "Unable to load race list. Check that the backend is running locally or that Vercel has RENDER_API_URL configured.")
       })
 
-    fetch(`${API}/analytics`)
-      .then((r) => r.json())
+    cachedJson(`${API}/analytics`)
       .then(setAnalytics)
       .catch(console.error)
+
+    // Warm the cache for both profiles so the first profile toggle is instant.
+    MODEL_PROFILES.forEach((p) => {
+      cachedJson(`${API}/model/stats?profile=${encodeURIComponent(p.key)}`).catch(() => {})
+    })
   }, [])
 
   useEffect(() => {
-    fetch(`${API}/model/stats?profile=${encodeURIComponent(selectedProfile)}`)
-      .then((r) => {
-        if (!r.ok) {
-          return readErrorMessage(r, `Model stats request failed with status ${r.status}`).then((message) => {
-            throw new Error(message)
-          })
-        }
-        return r.json()
-      })
-      .then(setModelStats)
+    let active = true
+    cachedJson(`${API}/model/stats?profile=${encodeURIComponent(selectedProfile)}`)
+      .then((data) => { if (active) setModelStats(data) })
       .catch(console.error)
+    return () => { active = false }
   }, [selectedProfile])
 
   useEffect(() => {
@@ -1153,10 +1171,14 @@ export default function App() {
         </div>
       </div>
 
-      {page === "analytics" && <AnalyticsPage analytics={analytics} modelStats={modelStats} selectedProfile={selectedProfile} />}
-      {page === "hood" && <UnderTheHoodPage />}
+      <div style={{ display: page === "analytics" ? "block" : "none" }}>
+        {visited.analytics && <AnalyticsPage analytics={analytics} modelStats={modelStats} selectedProfile={selectedProfile} />}
+      </div>
+      <div style={{ display: page === "hood" ? "block" : "none" }}>
+        {visited.hood && <UnderTheHoodPage />}
+      </div>
 
-      {page === "predict" && (
+      <div style={{ display: page === "predict" ? "block" : "none" }}>
         <>
           {loading && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "65vh" }}>
@@ -1288,7 +1310,7 @@ export default function App() {
             </div>
           )}
         </>
-      )}
+      </div>
 
       <div className="footer">
         <span>F1 STRATEGY LAB — 2015–2026</span>
