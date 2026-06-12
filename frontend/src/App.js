@@ -881,7 +881,7 @@ const UnderTheHoodPage = () => {
   )
 }
 
-const RaceSimulator = ({ results }) => {
+const RaceSimulator = ({ results, raceInfo }) => {
   const [phase, setPhase] = useState("idle")
   const slRef = useRef(null)
   const timerRef = useRef(null)
@@ -907,14 +907,18 @@ const RaceSimulator = ({ results }) => {
   const active = phase !== "idle"
   const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
 
+  const mapFile = CIRCUIT_MAPS[raceInfo?.circuit]
+  const mapUrl = mapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${mapFile}` : null
+
   return (
     <div className="sim-shell">
       <div className="sim-speedlines" ref={slRef} />
+
       <div className="sim-header">
         <div>
           <div className="kicker" style={{ marginBottom: "4px" }}>RACE SIMULATION</div>
           <div style={{ fontSize: "12px", color: "var(--text-faint)" }}>
-            {phase === "idle" ? "Animate predicted finishing positions from grid" : phase === "running" ? "Lights out and away we go..." : "Chequered flag — predicted result"}
+            {phase === "idle" ? "Starting grid · animate predicted finishing positions" : phase === "running" ? "Lights out and away we go..." : "Chequered flag — predicted result"}
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -924,34 +928,74 @@ const RaceSimulator = ({ results }) => {
           {phase !== "idle" && <button onClick={reset} className="btn-ghost">RESET</button>}
         </div>
       </div>
-      <div className="sim-lanes">
-        {gridOrder.map((driver, i) => {
-          const finishPos = results.findIndex(r => r.driver === driver.driver) + 1
-          const tc = TEAM_COLORS[driver.team] || "#888"
-          const startPct = 4 + (20 - driver.grid) * 0.3
-          const finishPct = 95 - (finishPos - 1) * 3.5
-          return (
-            <div key={driver.driver} className="sim-lane">
-              <div className="sim-lane-label">
-                <span style={{ color: "var(--border-strong)" }}>G{driver.grid}</span> {surname(driver.driver)}
+
+      <div className="sim-top">
+        <div className="sim-track-map">
+          {mapUrl ? (
+            <img
+              src={mapUrl}
+              alt={raceInfo?.name || "Circuit map"}
+              className="sim-track-img"
+              onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "flex" }}
+            />
+          ) : null}
+          <div className="sim-track-placeholder" style={{ display: mapUrl ? "none" : "flex" }}>
+            {fmtCircuit(raceInfo?.circuit) || "CIRCUIT"}
+          </div>
+          {raceInfo?.name && <div className="sim-track-label">{raceInfo.name}</div>}
+        </div>
+
+        <div className="sim-grid-panel">
+          <div className="kicker" style={{ marginBottom: "10px", fontSize: "9px" }}>STARTING GRID</div>
+          <div className="sim-grid-rows">
+            {Array.from({ length: Math.ceil(gridOrder.length / 2) }, (_, row) => {
+              const right = gridOrder[row * 2]
+              const left  = gridOrder[row * 2 + 1]
+              return (
+                <div key={row} className="sim-grid-row">
+                  <div className="sim-grid-cell sim-grid-left">
+                    {left && <GridCell driver={left} />}
+                  </div>
+                  <div className="sim-grid-cell sim-grid-right">
+                    {right && <GridCell driver={right} />}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="sim-lanes-section">
+        <div className="sim-lanes">
+          {gridOrder.map((driver, i) => {
+            const finishPos = results.findIndex(r => r.driver === driver.driver) + 1
+            const tc = TEAM_COLORS[driver.team] || "#888"
+            const startPct = 4 + (20 - driver.grid) * 0.3
+            const finishPct = 95 - (finishPos - 1) * 3.5
+            return (
+              <div key={driver.driver} className="sim-lane">
+                <div className="sim-lane-label">
+                  <span style={{ color: "var(--border-strong)" }}>G{driver.grid}</span> {surname(driver.driver)}
+                </div>
+                <div className="sim-lane-track">
+                  <div
+                    className="sim-car-fill"
+                    style={{
+                      width: active ? `${finishPct}%` : `${startPct}%`,
+                      background: `linear-gradient(90deg,${tc}20,${tc}70)`,
+                      borderRight: `3px solid ${tc}`,
+                      transition: active ? `width 2.6s cubic-bezier(0.2,0.8,0.4,1) ${i * 0.07}s` : "width 0.1s",
+                    }}
+                  />
+                </div>
+                {phase === "done" && (
+                  <div className="num" style={{ fontSize: "11px", color: tc, fontWeight: "800", width: "26px", textAlign: "right", flexShrink: 0 }}>P{finishPos}</div>
+                )}
               </div>
-              <div className="sim-lane-track">
-                <div
-                  className="sim-car-fill"
-                  style={{
-                    width: active ? `${finishPct}%` : `${startPct}%`,
-                    background: `linear-gradient(90deg,${tc}20,${tc}70)`,
-                    borderRight: `3px solid ${tc}`,
-                    transition: active ? `width 2.6s cubic-bezier(0.2,0.8,0.4,1) ${i * 0.07}s` : "width 0.1s",
-                  }}
-                />
-              </div>
-              {phase === "done" && (
-                <div className="num" style={{ fontSize: "11px", color: tc, fontWeight: "800", width: "26px", textAlign: "right", flexShrink: 0 }}>P{finishPos}</div>
-              )}
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -959,6 +1003,45 @@ const RaceSimulator = ({ results }) => {
 
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
 const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
+
+const CIRCUIT_MAPS = {
+  albert_park:   "Albert_Park_Circuit.svg",
+  americas:      "Circuit_of_the_Americas.svg",
+  bahrain:       "Bahrain_International_Circuit.svg",
+  baku:          "Baku_City_Circuit.svg",
+  catalunya:     "Circuit_de_Barcelona-Catalunya.svg",
+  hungaroring:   "Hungaroring.svg",
+  interlagos:    "Aut%C3%B3dromo_Jos%C3%A9_Carlos_Pace.svg",
+  jeddah:        "Jeddah_Corniche_Circuit.svg",
+  losail:        "Losail_International_Circuit.svg",
+  marina_bay:    "Marina_Bay_Street_Circuit.svg",
+  miami:         "Miami_International_Autodrome.svg",
+  monaco:        "Circuit_de_Monaco.svg",
+  monza:         "Autodromo_Nazionale_Monza.svg",
+  red_bull_ring: "Red_Bull_Ring.svg",
+  rodriguez:     "Autodromo_Hermanos_Rodriguez.svg",
+  shanghai:      "Shanghai_International_Circuit.svg",
+  silverstone:   "Silverstone_Circuit.svg",
+  spa:           "Circuit_de_Spa-Francorchamps.svg",
+  suzuka:        "Suzuka_circuit_schematic.svg",
+  vegas:         "Las_Vegas_Street_Circuit.svg",
+  villeneuve:    "Circuit_Gilles_Villeneuve.svg",
+  yas_marina:    "Yas_Marina_Circuit.svg",
+  zandvoort:     "Circuit_Zandvoort.svg",
+}
+
+const GridCell = ({ driver }) => {
+  const tc = TEAM_COLORS[driver.team] || "#888"
+  return (
+    <div className="sim-grid-driver" style={{ borderLeft: `3px solid ${tc}` }}>
+      <span className="num sim-grid-pos">P{driver.grid}</span>
+      <div>
+        <div className="sim-grid-name">{surname(driver.driver)}</div>
+        <div className="sim-grid-team">{driver.team.replace(/_/g, " ").toUpperCase()}</div>
+      </div>
+    </div>
+  )
+}
 
 function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error }) {
   const frameRef = useRef(null)
@@ -1362,7 +1445,7 @@ export default function App() {
                   {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
                 </div>
               </div>
-              <RaceSimulator results={results} />
+              <RaceSimulator results={results} raceInfo={raceInfo} />
             </div>
           )}
         </>
