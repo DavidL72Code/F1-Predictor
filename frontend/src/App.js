@@ -1046,6 +1046,7 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
               <img
                 src={circuitMapUrl}
                 alt={selectedRace?.name}
+                key={circuitMapUrl}
                 className="hero-circuit-img"
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
