@@ -610,7 +610,6 @@ body {
   width: 100%;
   max-height: 200px;
   object-fit: contain;
-  filter: invert(1) brightness(0.75);
 }
 
 .hero-grid-side {
@@ -971,7 +970,6 @@ body {
   width: 100%;
   max-height: 300px;
   object-fit: contain;
-  filter: invert(1) brightness(0.75);
 }
 
 .gs-row {

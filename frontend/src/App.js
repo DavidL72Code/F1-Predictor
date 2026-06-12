@@ -885,30 +885,33 @@ const UnderTheHoodPage = () => {
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
 const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
+const F1_CDN = "https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9"
+
 const CIRCUIT_MAPS = {
-  albert_park:   "Albert_Park_Circuit.svg",
-  americas:      "Circuit_of_the_Americas.svg",
-  bahrain:       "Bahrain_International_Circuit.svg",
-  baku:          "Baku_City_Circuit.svg",
-  catalunya:     "Circuit_de_Barcelona-Catalunya.svg",
-  hungaroring:   "Hungaroring.svg",
-  interlagos:    "Aut%C3%B3dromo_Jos%C3%A9_Carlos_Pace.svg",
-  jeddah:        "Jeddah_Corniche_Circuit.svg",
-  losail:        "Losail_International_Circuit.svg",
-  marina_bay:    "Marina_Bay_Street_Circuit.svg",
-  miami:         "Miami_International_Autodrome.svg",
-  monaco:        "Circuit_de_Monaco.svg",
-  monza:         "Autodromo_Nazionale_Monza.svg",
-  red_bull_ring: "Red_Bull_Ring.svg",
-  rodriguez:     "Autodromo_Hermanos_Rodriguez.svg",
-  shanghai:      "Shanghai_International_Circuit.svg",
-  silverstone:   "Silverstone_Circuit.svg",
-  spa:           "Circuit_de_Spa-Francorchamps.svg",
-  suzuka:        "Suzuka_circuit_schematic.svg",
-  vegas:         "Las_Vegas_Street_Circuit.svg",
-  villeneuve:    "Circuit_Gilles_Villeneuve.svg",
-  yas_marina:    "Yas_Marina_Circuit.svg",
-  zandvoort:     "Circuit_Zandvoort.svg",
+  albert_park:   `${F1_CDN}/Australia_Circuit`,
+  americas:      `${F1_CDN}/USA_Circuit`,
+  bahrain:       `${F1_CDN}/Bahrain_Circuit`,
+  baku:          `${F1_CDN}/Baku_Circuit`,
+  catalunya:     `${F1_CDN}/Spain_Circuit`,
+  hungaroring:   `${F1_CDN}/Hungary_Circuit`,
+  ifema_madrid:  "https://media.formula1.com/image/upload/c_fit,h_704/q_auto/v1740000000/common/f1/2026/track/2026trackmadringdetailed.webp",
+  interlagos:    `${F1_CDN}/Brazil_Circuit`,
+  jeddah:        `${F1_CDN}/Saudi_Arabia_Circuit`,
+  losail:        `${F1_CDN}/Qatar_Circuit`,
+  marina_bay:    `${F1_CDN}/Singapore_Circuit`,
+  miami:         `${F1_CDN}/Miami_Circuit`,
+  monaco:        `${F1_CDN}/Monaco_Circuit`,
+  monza:         `${F1_CDN}/Italy_Circuit`,
+  red_bull_ring: `${F1_CDN}/Austria_Circuit`,
+  rodriguez:     `${F1_CDN}/Mexico_Circuit`,
+  shanghai:      `${F1_CDN}/China_Circuit`,
+  silverstone:   `${F1_CDN}/Great_Britain_Circuit`,
+  spa:           `${F1_CDN}/Belgium_Circuit`,
+  suzuka:        `${F1_CDN}/Japan_Circuit`,
+  vegas:         `${F1_CDN}/Las_Vegas_Circuit`,
+  villeneuve:    `${F1_CDN}/Canada_Circuit`,
+  yas_marina:    `${F1_CDN}/Abu_Dhabi_Circuit`,
+  zandvoort:     `${F1_CDN}/Netherlands_Circuit`,
 }
 
 const GridCell = ({ driver, flip }) => {
@@ -968,8 +971,7 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
   }, [])
 
   const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
-  const circuitMapFile = selectedRace?.circuit ? CIRCUIT_MAPS[selectedRace.circuit] : null
-  const circuitMapUrl = circuitMapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${circuitMapFile}` : null
+  const circuitMapUrl = selectedRace?.circuit ? (CIRCUIT_MAPS[selectedRace.circuit] || null) : null
   const gridOrder = previewGrid ? [...previewGrid].sort((a, b) => a.grid - b.grid) : []
   const gridRows = Math.ceil(gridOrder.length / 2)
 
