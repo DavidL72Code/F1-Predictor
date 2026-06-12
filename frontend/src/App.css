@@ -24,7 +24,6 @@
 
   --radius: 8px;
   --spd: 1;
-  --shake: 1.6px;
 }
 
 * {
@@ -493,16 +492,6 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  --shake: 1.2px;
-  animation: zoompulse calc(6s / var(--spd)) ease-in-out infinite,
-             shake calc(0.2s / var(--spd)) infinite;
-  will-change: transform, filter;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .frame {
-    animation: none;
-  }
 }
 
 .layer {
@@ -523,7 +512,7 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center 64%;
-  transform: scale(1.06);
+  transform: scale(1.0);
 }
 
 .ghost {
@@ -586,10 +575,10 @@ body {
 /* Monochrome frosted-glass variant — blends with the black & white hero photo */
 .controls-mono {
   padding: 20px 22px;
-  background: rgba(10, 10, 12, 0.42);
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 10, 12, 0.22);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
