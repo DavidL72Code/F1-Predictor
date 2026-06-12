@@ -882,59 +882,6 @@ const UnderTheHoodPage = () => {
 }
 
 
-const ResultsHeroStage = ({ results, raceInfo }) => {
-  const petalsRef = useRef(null)
-  const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
-  const mapFile = CIRCUIT_MAPS[raceInfo?.circuit]
-  const mapUrl = mapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${mapFile}` : null
-  const rows = Math.ceil(gridOrder.length / 2)
-
-  useEffect(() => {
-    const c = petalsRef.current
-    if (!c) return
-    for (let i = 0; i < 18; i++) {
-      const p = document.createElement("div")
-      p.className = "petal"
-      const s = 6 + Math.random() * 7
-      p.style.cssText = `left:${Math.random()*100}%;width:${s}px;height:${s*.7}px;animation-duration:${5+Math.random()*6}s;animation-delay:${-Math.random()*10}s;--drift:${(Math.random()-.5)*160}px;--spin:${(Math.random()-.5)*540}deg;opacity:${.55+Math.random()*.4}`
-      c.appendChild(p)
-    }
-    return () => { if (c) c.innerHTML = "" }
-  }, [])
-
-  return (
-    <div className="stage">
-      <img className="layer hero-img" src={HERO_IMG_URL} alt="" />
-      <div className="hero-petals" ref={petalsRef} />
-      <div className="vignette" />
-      <div className="hero-fade" />
-      <div className="hero-overlay-layout">
-        <div className="controls-mono hero-map-side">
-          {mapUrl
-            ? <img src={mapUrl} alt={raceInfo?.name} className="hero-circuit-img" onError={(e) => { e.currentTarget.style.display = "none" }} />
-            : null}
-          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>{fmtCircuit(raceInfo?.circuit)}</div>
-        </div>
-        <div className="controls-mono" style={{ padding: "20px", overflowY: "auto", maxHeight: "calc(100vh - 180px)" }}>
-          <div className="kicker" style={{ marginBottom: "12px", fontSize: "9px" }}>STARTING GRID — {raceInfo?.name}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            {Array.from({ length: rows }, (_, row) => {
-              const right = gridOrder[row * 2]
-              const left  = gridOrder[row * 2 + 1]
-              return (
-                <div key={row} className="gs-row">
-                  <div className="gs-slot gs-left">{left && <GridCell driver={left} flip />}</div>
-                  <div className="gs-slot gs-right">{right && <GridCell driver={right} />}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
 const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
@@ -978,7 +925,7 @@ const GridCell = ({ driver, flip }) => {
   )
 }
 
-function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error }) {
+function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, previewGrid }) {
   const frameRef = useRef(null)
   const petalsRef = useRef(null)
 
@@ -1023,6 +970,8 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
   const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
   const circuitMapFile = selectedRace?.circuit ? CIRCUIT_MAPS[selectedRace.circuit] : null
   const circuitMapUrl = circuitMapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${circuitMapFile}` : null
+  const gridOrder = previewGrid ? [...previewGrid].sort((a, b) => a.grid - b.grid) : []
+  const gridRows = Math.ceil(gridOrder.length / 2)
 
   return (
     <div className="stage">
@@ -1093,6 +1042,28 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
             ))}
           </div>
         </div>
+
+        <div className="controls-mono hero-grid-side">
+          <div className="kicker" style={{ marginBottom: "10px", fontSize: "9px", color: "rgba(255,255,255,0.7)" }}>STARTING GRID</div>
+          {gridOrder.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {Array.from({ length: gridRows }, (_, row) => {
+                const right = gridOrder[row * 2]
+                const left  = gridOrder[row * 2 + 1]
+                return (
+                  <div key={row} className="gs-row">
+                    <div className="gs-slot gs-left">{left && <GridCell driver={left} flip />}</div>
+                    <div className="gs-slot gs-right">{right && <GridCell driver={right} />}</div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", letterSpacing: "1.5px", textAlign: "center", padding: "20px 0" }}>
+              LOADING GRID…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1109,6 +1080,7 @@ export default function App() {
   const [results, setResults] = useState(null)
   const [accuracy, setAccuracy] = useState(null)
   const [raceInfo, setRaceInfo] = useState(null)
+  const [previewGrid, setPreviewGrid] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
   const [analytics, setAnalytics] = useState(null)
@@ -1195,6 +1167,22 @@ export default function App() {
     setError("")
   }, [selectedProfile])
 
+  // Keep the hero's track map + starting grid in sync with the selection,
+  // before the user ever hits PREDICT RACE.
+  useEffect(() => {
+    const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
+    if (!selectedRace) {
+      setPreviewGrid(null)
+      return
+    }
+    let active = true
+    setPreviewGrid(null)
+    cachedJson(`${API}/races/${selectedYear}/${selectedRace.round}?profile=${encodeURIComponent(selectedProfile)}`)
+      .then((data) => { if (active) setPreviewGrid(data.results) })
+      .catch(() => { if (active) setPreviewGrid(null) })
+    return () => { active = false }
+  }, [selectedRaceKey, raceOptions, selectedYear, selectedProfile])
+
   const predict = async () => {
     const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
     if (!selectedRace) return
@@ -1212,11 +1200,7 @@ export default function App() {
 
 
     try {
-      const res = await fetch(`${API}/races/${selectedYear}/${selectedRace.round}?profile=${encodeURIComponent(selectedProfile)}`)
-      if (!res.ok) {
-        throw new Error(await readErrorMessage(res, `Prediction request failed with status ${res.status}`))
-      }
-      const data = await res.json()
+      const data = await cachedJson(`${API}/races/${selectedYear}/${selectedRace.round}?profile=${encodeURIComponent(selectedProfile)}`)
       const remaining = Math.max(0, minLoadingMs - (Date.now() - startedAt))
       if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining))
 
@@ -1285,30 +1269,53 @@ export default function App() {
             </div>
           )}
 
-          {/* SCREEN 1: cherry blossom hero — shows SELECT RACE before predict, circuit map + starting grid after */}
-          {!loading && (
-            results ? (
-              <ResultsHeroStage results={results} raceInfo={raceInfo} />
-            ) : (
-              <HeroStage
-                years={years}
-                selectedYear={selectedYear}
-                setYear={setYear}
-                raceOptions={raceOptions}
-                selectedRaceKey={selectedRaceKey}
-                setSelectedRaceKey={setSelectedRaceKey}
-                predict={predict}
-                loading={loading}
-                modelStats={modelStats}
-                selectedProfile={selectedProfile}
-                error={error}
-              />
-            )
+          {/* SCREEN 1: select race — track map + starting grid follow the selection */}
+          {!loading && !results && (
+            <HeroStage
+              years={years}
+              selectedYear={selectedYear}
+              setYear={setYear}
+              raceOptions={raceOptions}
+              selectedRaceKey={selectedRaceKey}
+              setSelectedRaceKey={setSelectedRaceKey}
+              predict={predict}
+              loading={loading}
+              modelStats={modelStats}
+              selectedProfile={selectedProfile}
+              error={error}
+              previewGrid={previewGrid}
+            />
           )}
 
-          {/* SCREEN 2: predictions — only shows after predict */}
+          {/* SCREEN 2: predictions — changing the selection here returns to screen 1 */}
           {!loading && results && (
             <div className="page" style={{ animation: "fadeUp 0.3s ease" }}>
+
+              <div className="selector-bar">
+                <div className="field">
+                  <span className="field-label">YEAR</span>
+                  <select value={selectedYear} onChange={(e) => { setYear(Number(e.target.value)); setResults(null) }} className="select">
+                    {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <span className="field-label">CIRCUIT</span>
+                  <select value={selectedRaceKey} onChange={(e) => { setSelectedRaceKey(e.target.value); setResults(null) }} className="select" style={{ minWidth: "260px" }}>
+                    {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
+                  </select>
+                </div>
+                <div className="toggle-group">
+                  <span className="field-label">SHOW ACTUAL</span>
+                  <div
+                    onClick={() => setShowActual(!showActual)}
+                    className="toggle-track"
+                    style={{ background: showActual ? "var(--accent)" : "var(--border)" }}
+                  >
+                    <div className="toggle-knob" style={{ left: showActual ? "18px" : "2px" }} />
+                  </div>
+                </div>
+              </div>
+
               {error && <div className="notice error">{error}</div>}
 
               {isFuture && (
@@ -1373,14 +1380,6 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
-                    <div className="toggle-group">
-                      <span className="field-label">SHOW ACTUAL</span>
-                      <div onClick={() => setShowActual(!showActual)} className="toggle-track" style={{ background: showActual ? "var(--accent)" : "var(--border)" }}>
-                        <div className="toggle-knob" style={{ left: showActual ? "18px" : "2px" }} />
-                      </div>
-                    </div>
-                  </div>
                   <div style={{ display: "grid", gridTemplateColumns: "32px 3px 1fr 90px 44px 50px", gap: "0 12px", padding: "6px 12px", fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px", borderBottom: "1px solid var(--border)", marginBottom: "6px" }}>
                     <div style={{ textAlign: "center" }}>POS</div><div />
                     <div>DRIVER</div><div>WIN PROB</div>
