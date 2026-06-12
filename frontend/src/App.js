@@ -958,19 +958,23 @@ const RaceSimulator = ({ results }) => {
 }
 
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
+const VIDEO_URL = `${process.env.PUBLIC_URL}/hero-video.mp4`
 
 function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error }) {
   const frameRef = useRef(null)
 
-  const imgStyle = { "--img": `url("${IMG_URL}")` }
-
   return (
     <div className="stage">
-      <div className="frame" ref={frameRef} style={imgStyle}>
-        <div className="layer sharp" style={imgStyle} />
-        <div className="layer ghost g1" style={imgStyle} />
-        <div className="layer ghost g2" style={imgStyle} />
-        <div className="layer ghost g3" style={imgStyle} />
+      <div className="frame" ref={frameRef}>
+        <video
+          className="layer hero-video"
+          src={VIDEO_URL}
+          poster={IMG_URL}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
         <div className="speedlines" />
         <div className="vignette" />
         <div className="hero-fade" />
