@@ -983,24 +983,6 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
       </div>
 
       <div className="hero-overlay-layout">
-        <div className="controls-mono hero-map-side">
-          {circuitMapUrl ? (
-            <>
-              <img
-                src={circuitMapUrl}
-                alt={selectedRace?.name}
-                className="hero-circuit-img"
-                onError={(e) => { e.currentTarget.style.display = "none" }}
-              />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>
-                {selectedRace?.name}
-              </div>
-            </>
-          ) : (
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
-          )}
-        </div>
-
         <div className="controls-mono hero-selector-side">
           <div className="controls-head">
             <div className="kicker" style={{ marginBottom: "4px" }}>SELECT RACE</div>
@@ -1041,6 +1023,24 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="controls-mono hero-map-side">
+          {circuitMapUrl ? (
+            <>
+              <img
+                src={circuitMapUrl}
+                alt={selectedRace?.name}
+                className="hero-circuit-img"
+                onError={(e) => { e.currentTarget.style.display = "none" }}
+              />
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>
+                {selectedRace?.name}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
+          )}
         </div>
 
         <div className="controls-mono hero-grid-side">
