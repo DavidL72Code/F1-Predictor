@@ -958,7 +958,7 @@ const RaceSimulator = ({ results }) => {
 }
 
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
-const VIDEO_URL = `${process.env.PUBLIC_URL}/hero-video.mp4`
+const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
 function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error }) {
   const frameRef = useRef(null)
@@ -966,24 +966,16 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
   return (
     <div className="stage">
       <div className="frame" ref={frameRef}>
-        <video
-          className="layer hero-video"
-          src={VIDEO_URL}
-          poster={IMG_URL}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
+        <img className="layer hero-img" src={HERO_IMG_URL} alt="Formula 1 car" onError={(e) => { e.currentTarget.src = IMG_URL }} />
         <div className="speedlines" />
         <div className="vignette" />
         <div className="hero-fade" />
       </div>
 
-      <div className="controls">
+      <div className="controls controls-mono">
         <div className="controls-head">
           <div className="kicker" style={{ marginBottom: "4px" }}>SELECT RACE</div>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.55)" }}>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>
             {modelStats?.profile_label || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.label}
             {" "}·{" "}
             {modelStats?.profile_description || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.description}
@@ -1002,21 +994,21 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
               {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
             </select>
           </div>
-          <button onClick={predict} disabled={loading || !selectedRaceKey} className="btn-primary">
+          <button onClick={predict} disabled={loading || !selectedRaceKey} className="hero-cta">
             ▶ PREDICT RACE
           </button>
         </div>
         {error && <div className="hero-error">{error}</div>}
         <div className="hero-stat-chips">
           {[
-            {label:"2016 WINNER ACC",val:"66.7%",color:"#4488FF"},
-            {label:"2023 WINNER ACC",val:"86.4%",color:"#00A550"},
-            {label:"2024 SPEARMAN",val:"0.763",color:"#FFD700"},
-            {label:"2024 MAE",val:"2.90p",color:"#FF6B00"},
+            {label:"2016 WINNER ACC",val:"66.7%"},
+            {label:"2023 WINNER ACC",val:"86.4%"},
+            {label:"2024 SPEARMAN",val:"0.763"},
+            {label:"2024 MAE",val:"2.90p"},
           ].map((s) => (
-            <div key={s.label} className="hero-stat-chip" style={{ "--chip-color": s.color }}>
+            <div key={s.label} className="hero-stat-chip">
               <div className="chip-label">{s.label}</div>
-              <div className="chip-value num" style={{ color: s.color }}>{s.val}</div>
+              <div className="chip-value num">{s.val}</div>
             </div>
           ))}
         </div>

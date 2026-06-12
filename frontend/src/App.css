@@ -515,14 +515,14 @@ body {
 
 .sharp { z-index: 1; }
 
-/* Looping hero video — fills the frame, subtly scaled so the camera shake
-   never reveals an edge. Inherits the frame's shake + zoom-pulse. */
-.hero-video {
+/* Hero image — fills the frame, focused on the car/burnout. Subtly scaled so
+   the camera shake never reveals an edge. Inherits frame shake + zoom-pulse. */
+.hero-img {
   z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: center 64%;
   transform: scale(1.06);
 }
 
@@ -581,6 +581,81 @@ body {
   z-index: 20;
   width: calc(100% - 56px);
   max-width: 900px;
+}
+
+/* Monochrome frosted-glass variant — blends with the black & white hero photo */
+.controls-mono {
+  padding: 20px 22px;
+  background: rgba(10, 10, 12, 0.42);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.controls-mono .kicker {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.controls-mono .field-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.controls-mono .select {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.controls-mono .select:hover,
+.controls-mono .select:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.controls-mono .select option {
+  background: #111;
+  color: #fff;
+}
+
+.controls-mono .hero-stat-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.controls-mono .chip-value {
+  color: #f2f2f5;
+}
+
+/* White "burnout smoke" CTA — echoes the white F1 logo + smoke in the photo */
+.hero-cta {
+  background: linear-gradient(135deg, #ffffff 0%, #c7cace 100%);
+  border: none;
+  border-radius: 7px;
+  color: #0a0a0c;
+  padding: 11px 28px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.2);
+  transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.hero-cta:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.34);
+}
+
+.hero-cta:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.hero-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .controls-head {
