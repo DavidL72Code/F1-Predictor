@@ -1060,7 +1060,8 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
 
         <div className="controls-mono hero-map-side">
           {circuitMapUrl ? (
-            <div className="hero-map-wrap">
+            <>
+              <div className="hero-circuit-title">{smData?.name || selectedRace?.name}</div>
               <img
                 src={circuitMapUrl}
                 alt={selectedRace?.name}
@@ -1068,8 +1069,7 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
               {smData && (
-                <div className="hero-circuit-popup">
-                  <div className="hero-circuit-popup-name">{smData.name}</div>
+                <div className="hero-circuit-details">
                   <div className="hero-circuit-popup-row"><span>Circuit</span><span>{smData.circuit}</span></div>
                   <div className="hero-circuit-popup-row"><span>Round {smData.round}</span><span>{new Date(smData.race_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
                   <div className="hero-circuit-popup-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
@@ -1078,7 +1078,7 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
                   <div className="hero-circuit-popup-row"><span>Race Length</span><span>{smData.race_length_miles} mi / {smData.race_length_km} km</span></div>
                 </div>
               )}
-            </div>
+            </>
           ) : (
             <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
           )}
