@@ -912,8 +912,17 @@ const CIRCUIT_DATA = {
   losail:        { name:"Qatar Grand Prix", circuit:"Lusail International Circuit", round:21, race_date:"2026-11-29", city:"Lusail", country:"Qatar", laps:57, circuit_length_miles:3.367, circuit_length_km:5.419, race_length_miles:191.762, race_length_km:308.611, track:`${F1_CDN}/Qatar_Circuit` },
   yas_marina:    { name:"Abu Dhabi Grand Prix", circuit:"Yas Marina Circuit", round:22, race_date:"2026-12-06", city:"Yas Marina", country:"United Arab Emirates", laps:58, circuit_length_miles:3.281, circuit_length_km:5.281, race_length_miles:190.253, race_length_km:306.183, track:`${F1_CDN}/Abu_Dhabi_Circuit` },
   // historical circuits not in 2026 calendar
-  bahrain:       { name:"Bahrain Grand Prix", circuit:"Bahrain International Circuit", city:"Sakhir", country:"Bahrain", laps:57, circuit_length_miles:3.363, circuit_length_km:5.412, track:`${F1_CDN}/Bahrain_Circuit` },
-  jeddah:        { name:"Saudi Arabian Grand Prix", circuit:"Jeddah Corniche Circuit", city:"Jeddah", country:"Saudi Arabia", laps:50, circuit_length_miles:3.836, circuit_length_km:6.174, track:`${F1_CDN}/Saudi_Arabia_Circuit` },
+  bahrain:         { name:"Bahrain Grand Prix", circuit:"Bahrain International Circuit", city:"Sakhir", country:"Bahrain", laps:57, circuit_length_miles:3.363, circuit_length_km:5.412, track:`${F1_CDN}/Bahrain_Circuit` },
+  jeddah:          { name:"Saudi Arabian Grand Prix", circuit:"Jeddah Corniche Circuit", city:"Jeddah", country:"Saudi Arabia", laps:50, circuit_length_miles:3.836, circuit_length_km:6.174, track:`${F1_CDN}/Saudi_Arabia_Circuit` },
+  hockenheimring:  { name:"German Grand Prix", circuit:"Hockenheimring", city:"Hockenheim", country:"Germany", laps:67, circuit_length_miles:2.842, circuit_length_km:4.574, track:`${F1_CDN}/Germany_Circuit` },
+  imola:           { name:"Emilia Romagna Grand Prix", circuit:"Autodromo Enzo e Dino Ferrari", city:"Imola", country:"Italy", laps:63, circuit_length_miles:3.051, circuit_length_km:4.909, track:`${F1_CDN}/Emilia_Romagna_Circuit` },
+  istanbul:        { name:"Turkish Grand Prix", circuit:"Istanbul Park", city:"Istanbul", country:"Turkey", laps:58, circuit_length_miles:3.317, circuit_length_km:5.338, track:`${F1_CDN}/Turkey_Circuit` },
+  mugello:         { name:"Tuscan Grand Prix", circuit:"Autodromo Internazionale del Mugello", city:"Scarperia", country:"Italy", laps:59, circuit_length_miles:3.259, circuit_length_km:5.245, track:`${F1_CDN}/Tuscany_Circuit` },
+  nurburgring:     { name:"Eifel Grand Prix", circuit:"Nürburgring", city:"Nürburg", country:"Germany", laps:60, circuit_length_miles:3.199, circuit_length_km:5.148, track:`${F1_CDN}/Eifel_Circuit` },
+  portimao:        { name:"Portuguese Grand Prix", circuit:"Autodromo Internacional do Algarve", city:"Portimão", country:"Portugal", laps:66, circuit_length_miles:2.91, circuit_length_km:4.684, track:`${F1_CDN}/Portugal_Circuit` },
+  ricard:          { name:"French Grand Prix", circuit:"Circuit Paul Ricard", city:"Le Castellet", country:"France", laps:53, circuit_length_miles:3.63, circuit_length_km:5.842, track:`${F1_CDN}/France_Circuit` },
+  sepang:          { name:"Malaysian Grand Prix", circuit:"Sepang International Circuit", city:"Sepang", country:"Malaysia", laps:56, circuit_length_miles:3.444, circuit_length_km:5.543, track:"https://en.wikipedia.org/wiki/Special:FilePath/Sepang_International_Circuit.svg" },
+  sochi:           { name:"Russian Grand Prix", circuit:"Sochi Autodrom", city:"Sochi", country:"Russia", laps:53, circuit_length_miles:3.634, circuit_length_km:5.848, track:`${F1_CDN}/Russia_Circuit` },
 }
 
 const GridCell = ({ driver, flip }) => {
