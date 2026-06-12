@@ -881,6 +881,64 @@ const UnderTheHoodPage = () => {
   )
 }
 
+const GridScreen = ({ results, raceInfo, isFuture, onViewPredictions }) => {
+  const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
+  const mapFile = CIRCUIT_MAPS[raceInfo?.circuit]
+  const mapUrl = mapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${mapFile}` : null
+  const rows = Math.ceil(gridOrder.length / 2)
+
+  return (
+    <div className="grid-screen" style={{ animation: "fadeUp 0.35s ease" }}>
+      <div className="grid-screen-inner">
+        <div className="grid-screen-head">
+          <div className="kicker">{raceInfo?.year} FORMULA ONE{isFuture ? " — FUTURE RACE" : ""}</div>
+          <div className="grid-screen-title">{raceInfo?.name}</div>
+        </div>
+
+        <div className="grid-screen-body">
+          <div className="grid-screen-map">
+            {mapUrl && (
+              <img
+                src={mapUrl}
+                alt={raceInfo?.name}
+                className="grid-screen-map-img"
+                onError={(e) => { e.currentTarget.style.display = "none" }}
+              />
+            )}
+            <div className="grid-screen-circuit-name">{fmtCircuit(raceInfo?.circuit)}</div>
+          </div>
+
+          <div className="grid-screen-grid">
+            <div className="kicker" style={{ marginBottom: "14px", fontSize: "9px" }}>STARTING GRID</div>
+            <div className="grid-screen-formation">
+              {Array.from({ length: rows }, (_, row) => {
+                const right = gridOrder[row * 2]
+                const left  = gridOrder[row * 2 + 1]
+                return (
+                  <div key={row} className="gs-row">
+                    <div className="gs-slot gs-left">
+                      {left && <GridCell driver={left} flip />}
+                    </div>
+                    <div className="gs-slot gs-right">
+                      {right && <GridCell driver={right} />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid-screen-cta">
+          <button className="btn-primary" style={{ padding: "12px 36px", fontSize: "12px", letterSpacing: "1.5px" }} onClick={onViewPredictions}>
+            VIEW PREDICTIONS →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const RaceSimulator = ({ results, raceInfo }) => {
   const [phase, setPhase] = useState("idle")
   const slRef = useRef(null)
@@ -1030,10 +1088,11 @@ const CIRCUIT_MAPS = {
   zandvoort:     "Circuit_Zandvoort.svg",
 }
 
-const GridCell = ({ driver }) => {
+const GridCell = ({ driver, flip }) => {
   const tc = TEAM_COLORS[driver.team] || "#888"
+  const border = flip ? { borderLeft: "none", borderRight: `3px solid ${tc}` } : { borderLeft: `3px solid ${tc}` }
   return (
-    <div className="sim-grid-driver" style={{ borderLeft: `3px solid ${tc}` }}>
+    <div className="sim-grid-driver" style={border}>
       <span className="num sim-grid-pos">P{driver.grid}</span>
       <div>
         <div className="sim-grid-name">{surname(driver.driver)}</div>
@@ -1150,6 +1209,7 @@ export default function App() {
   const [results, setResults] = useState(null)
   const [accuracy, setAccuracy] = useState(null)
   const [raceInfo, setRaceInfo] = useState(null)
+  const [gridView, setGridView] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
   const [analytics, setAnalytics] = useState(null)
@@ -1231,6 +1291,7 @@ export default function App() {
     setResults(null)
     setAccuracy(null)
     setRaceInfo(null)
+    setGridView(false)
     setIsFuture(false)
     setFutureNote("")
     setError("")
@@ -1265,6 +1326,7 @@ export default function App() {
       setRaceInfo({ year: data.year, round: data.round, circuit: data.circuit, name: data.name, profile: data.profile, profileLabel: data.profile_label })
       setIsFuture(data.mode === "future")
       setFutureNote(data.note || "")
+      setGridView(true)
     } catch (err) {
       console.error(err)
       setError(err.message || "Prediction failed. Please try again.")
@@ -1325,6 +1387,15 @@ export default function App() {
             </div>
           )}
 
+          {!loading && results && gridView && (
+            <GridScreen
+              results={results}
+              raceInfo={raceInfo}
+              isFuture={isFuture}
+              onViewPredictions={() => setGridView(false)}
+            />
+          )}
+
           {!loading && !results && (
             <HeroStage
               years={years}
@@ -1341,19 +1412,19 @@ export default function App() {
             />
           )}
 
-          {!loading && results && (
+          {!loading && results && !gridView && (
             <div className="page" style={{ animation: "fadeUp 0.3s ease" }}>
 
               <div className="selector-bar">
                 <div className="field">
                   <span className="field-label">YEAR</span>
-                  <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} className="select">
+                  <select value={selectedYear} onChange={(e) => { setYear(Number(e.target.value)); setResults(null); setGridView(false) }} className="select">
                     {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
                   </select>
                 </div>
                 <div className="field">
                   <span className="field-label">CIRCUIT</span>
-                  <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} className="select" style={{ minWidth: "260px" }}>
+                  <select value={selectedRaceKey} onChange={(e) => { setSelectedRaceKey(e.target.value); setResults(null); setGridView(false) }} className="select" style={{ minWidth: "260px" }}>
                     {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
                   </select>
                 </div>
@@ -1445,7 +1516,6 @@ export default function App() {
                   {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
                 </div>
               </div>
-              <RaceSimulator results={results} raceInfo={raceInfo} />
             </div>
           )}
         </>
