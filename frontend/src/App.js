@@ -882,35 +882,62 @@ const UnderTheHoodPage = () => {
 }
 
 const GridScreen = ({ results, raceInfo, isFuture, onViewPredictions }) => {
+  const petalsRef = useRef(null)
   const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
   const mapFile = CIRCUIT_MAPS[raceInfo?.circuit]
   const mapUrl = mapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${mapFile}` : null
   const rows = Math.ceil(gridOrder.length / 2)
 
+  useEffect(() => {
+    const container = petalsRef.current
+    if (!container) return
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement("div")
+      p.className = "petal"
+      const size = 6 + Math.random() * 7
+      p.style.cssText = [
+        `left:${Math.random() * 100}%`,
+        `width:${size}px`,
+        `height:${size * 0.7}px`,
+        `animation-duration:${5 + Math.random() * 6}s`,
+        `animation-delay:${-Math.random() * 10}s`,
+        `--drift:${(Math.random() - 0.5) * 160}px`,
+        `--spin:${(Math.random() - 0.5) * 540}deg`,
+        `opacity:${0.55 + Math.random() * 0.4}`,
+      ].join(";")
+      container.appendChild(p)
+    }
+    return () => { if (container) container.innerHTML = "" }
+  }, [])
+
   return (
-    <div className="grid-screen" style={{ animation: "fadeUp 0.35s ease" }}>
-      <div className="grid-screen-inner">
-        <div className="grid-screen-head">
-          <div className="kicker">{raceInfo?.year} FORMULA ONE{isFuture ? " — FUTURE RACE" : ""}</div>
-          <div className="grid-screen-title">{raceInfo?.name}</div>
+    <div className="stage" style={{ animation: "fadeUp 0.35s ease", height: "auto", minHeight: "calc(100vh - 60px)" }}>
+      <img className="layer hero-img" src={HERO_IMG_URL} alt="" style={{ position: "fixed", top: 60, left: 0, right: 0, bottom: 0, height: "calc(100vh - 60px)", zIndex: 0 }} />
+      <div className="hero-petals" ref={petalsRef} style={{ position: "fixed", top: 60, left: 0, right: 0, bottom: 0, zIndex: 1 }} />
+      <div className="vignette" style={{ position: "fixed", top: 60, left: 0, right: 0, bottom: 0, zIndex: 2 }} />
+
+      <div className="gs-overlay" style={{ position: "relative", zIndex: 10, width: "100%", padding: "40px 28px 56px", display: "flex", flexDirection: "column", gap: "28px", maxWidth: "1100px", margin: "0 auto" }}>
+        <div>
+          <div className="kicker" style={{ color: "rgba(255,255,255,0.7)" }}>{raceInfo?.year} FORMULA ONE{isFuture ? " — FUTURE RACE" : ""}</div>
+          <div style={{ fontSize: "34px", fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", marginTop: "6px" }}>{raceInfo?.name}</div>
         </div>
 
-        <div className="grid-screen-body">
-          <div className="grid-screen-map">
+        <div className="gs-body">
+          <div className="gs-map-panel controls-mono" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "20px" }}>
             {mapUrl && (
               <img
                 src={mapUrl}
                 alt={raceInfo?.name}
-                className="grid-screen-map-img"
+                className="gs-map-img"
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
             )}
-            <div className="grid-screen-circuit-name">{fmtCircuit(raceInfo?.circuit)}</div>
+            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase" }}>{fmtCircuit(raceInfo?.circuit)}</div>
           </div>
 
-          <div className="grid-screen-grid">
-            <div className="kicker" style={{ marginBottom: "14px", fontSize: "9px" }}>STARTING GRID</div>
-            <div className="grid-screen-formation">
+          <div className="gs-grid-panel controls-mono" style={{ padding: "20px", overflowY: "auto", maxHeight: "520px" }}>
+            <div className="kicker" style={{ marginBottom: "14px", fontSize: "9px", color: "rgba(255,255,255,0.7)" }}>STARTING GRID</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
               {Array.from({ length: rows }, (_, row) => {
                 const right = gridOrder[row * 2]
                 const left  = gridOrder[row * 2 + 1]
@@ -929,8 +956,8 @@ const GridScreen = ({ results, raceInfo, isFuture, onViewPredictions }) => {
           </div>
         </div>
 
-        <div className="grid-screen-cta">
-          <button className="btn-primary" style={{ padding: "12px 36px", fontSize: "12px", letterSpacing: "1.5px" }} onClick={onViewPredictions}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button className="hero-cta" style={{ fontSize: "12px", letterSpacing: "1.5px", padding: "13px 40px" }} onClick={onViewPredictions}>
             VIEW PREDICTIONS →
           </button>
         </div>
