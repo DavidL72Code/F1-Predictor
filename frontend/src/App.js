@@ -1233,7 +1233,7 @@ export default function App() {
             </div>
           )}
 
-          {!loading && (
+          {!loading && !results && (
             <HeroStage
               years={years}
               selectedYear={selectedYear}
