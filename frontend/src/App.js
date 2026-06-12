@@ -1058,7 +1058,6 @@ export default function App() {
   const [raceInfo, setRaceInfo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
-  const [showTable, setShowTable] = useState(false)
   const [analytics, setAnalytics] = useState(null)
   const [modelStats, setModelStats] = useState(null)
   const [isFuture, setIsFuture] = useState(false)
@@ -1157,7 +1156,7 @@ export default function App() {
     setRaceInfo(null)
     setIsFuture(false)
     setFutureNote("")
-    setShowTable(false)
+
 
     try {
       const res = await fetch(`${API}/races/${selectedYear}/${selectedRace.round}?profile=${encodeURIComponent(selectedProfile)}`)
@@ -1328,47 +1327,33 @@ export default function App() {
                   )}
                 </div>
 
-                {!showTable ? (
-                  <>
-                    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "28px", alignItems: "start" }}>
-                      <div>
-                        <Podium results={results} />
-                        <div className="card" style={{ padding: "16px" }}>
-                          <div className="card-label" style={{ marginBottom: "10px" }}>{isFuture ? "PREDICTION METHOD" : "ACTUAL POSITION KEY"}</div>
-                          {isFuture ? (
-                            <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.8" }}>
-                              {raceInfo?.profileLabel || modelStats?.profile_label}<br />
-                              2026 weighted 10x, 2025 weighted 3x<br />
-                              Equal grid, medium tyre, dry track assumed<br />
-                              No actual results available yet
-                            </div>
-                          ) : [
-                            {color:"#00A550",label:"Exact match"},
-                            {color:"#4488FF",label:"Within 2 positions"},
-                            {color:"#FF6B00",label:"Within 4 positions"},
-                            {color:"#E8003D",label:"Missed by 5+"},
-                          ].map((k) => (
-                            <div key={k.label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                              <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: `${k.color}22`, border: `1px solid ${k.color}` }} />
-                              <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{k.label}</div>
-                            </div>
-                          ))}
+                <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "28px", alignItems: "start" }}>
+                  <div>
+                    <Podium results={results} />
+                    <div className="card" style={{ padding: "16px" }}>
+                      <div className="card-label" style={{ marginBottom: "10px" }}>{isFuture ? "PREDICTION METHOD" : "ACTUAL POSITION KEY"}</div>
+                      {isFuture ? (
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.8" }}>
+                          {raceInfo?.profileLabel || modelStats?.profile_label}<br />
+                          2026 weighted 10x, 2025 weighted 3x<br />
+                          Equal grid, medium tyre, dry track assumed<br />
+                          No actual results available yet
                         </div>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        {results.slice(0, 3).map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
-                        <button onClick={() => { setShowTable(true); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="btn-ghost" style={{ marginTop: "8px", alignSelf: "flex-start" }}>
-                          VIEW FULL RESULTS ({results.length} drivers) →
-                        </button>
-                      </div>
+                      ) : [
+                        {color:"#00A550",label:"Exact match"},
+                        {color:"#4488FF",label:"Within 2 positions"},
+                        {color:"#FF6B00",label:"Within 4 positions"},
+                        {color:"#E8003D",label:"Missed by 5+"},
+                      ].map((k) => (
+                        <div key={k.label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                          <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: `${k.color}22`, border: `1px solid ${k.color}` }} />
+                          <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{k.label}</div>
+                        </div>
+                      ))}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                      <button onClick={() => { setShowTable(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="btn-ghost">
-                        ← BACK TO SUMMARY
-                      </button>
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
                       <div className="toggle-group">
                         <span className="field-label">SHOW ACTUAL</span>
                         <div onClick={() => setShowActual(!showActual)} className="toggle-track" style={{ background: showActual ? "var(--accent)" : "var(--border)" }}>
@@ -1383,8 +1368,8 @@ export default function App() {
                       <div style={{ textAlign: "center" }}>{showActual && !isFuture ? "ACTUAL" : "—"}</div>
                     </div>
                     {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
             )
           })()}
