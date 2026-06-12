@@ -1141,7 +1141,6 @@ export default function App() {
   const [results, setResults] = useState(null)
   const [accuracy, setAccuracy] = useState(null)
   const [raceInfo, setRaceInfo] = useState(null)
-  const [gridView, setGridView] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
   const [analytics, setAnalytics] = useState(null)
@@ -1223,7 +1222,6 @@ export default function App() {
     setResults(null)
     setAccuracy(null)
     setRaceInfo(null)
-    setGridView(false)
     setIsFuture(false)
     setFutureNote("")
     setError("")
@@ -1258,7 +1256,6 @@ export default function App() {
       setRaceInfo({ year: data.year, round: data.round, circuit: data.circuit, name: data.name, profile: data.profile, profileLabel: data.profile_label })
       setIsFuture(data.mode === "future")
       setFutureNote(data.note || "")
-      setGridView(true)
     } catch (err) {
       console.error(err)
       setError(err.message || "Prediction failed. Please try again.")
@@ -1319,16 +1316,7 @@ export default function App() {
             </div>
           )}
 
-          {!loading && results && gridView && (
-            <GridScreen
-              results={results}
-              raceInfo={raceInfo}
-              isFuture={isFuture}
-              onViewPredictions={() => setGridView(false)}
-            />
-          )}
-
-          {!loading && !results && (
+          {!loading && (
             <HeroStage
               years={years}
               selectedYear={selectedYear}
@@ -1344,112 +1332,135 @@ export default function App() {
             />
           )}
 
-          {!loading && results && !gridView && (
-            <div className="page" style={{ animation: "fadeUp 0.3s ease" }}>
+          {!loading && results && (() => {
+            const mapFile = CIRCUIT_MAPS[raceInfo?.circuit]
+            const mapUrl = mapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${mapFile}` : null
+            const gridOrder = [...results].sort((a, b) => a.grid - b.grid)
+            const gridRows = Math.ceil(gridOrder.length / 2)
+            return (
+              <div className="page" style={{ animation: "fadeUp 0.3s ease" }}>
 
-              <div className="selector-bar">
-                <div className="field">
-                  <span className="field-label">YEAR</span>
-                  <select value={selectedYear} onChange={(e) => { setYear(Number(e.target.value)); setResults(null); setGridView(false) }} className="select">
-                    {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
-                  </select>
-                </div>
-                <div className="field">
-                  <span className="field-label">CIRCUIT</span>
-                  <select value={selectedRaceKey} onChange={(e) => { setSelectedRaceKey(e.target.value); setResults(null); setGridView(false) }} className="select" style={{ minWidth: "260px" }}>
-                    {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
-                  </select>
-                </div>
-                <button onClick={predict} disabled={loading || !selectedRaceKey} className="btn-primary">
-                  ▶ PREDICT RACE
-                </button>
-                <div className="toggle-group">
-                  <span className="field-label">SHOW ACTUAL</span>
-                  <div
-                    onClick={() => setShowActual(!showActual)}
-                    className="toggle-track"
-                    style={{ background: showActual ? "var(--accent)" : "var(--border)" }}
-                  >
-                    <div className="toggle-knob" style={{ left: showActual ? "18px" : "2px" }} />
+                <div className="gs-body" style={{ marginBottom: "28px", alignItems: "stretch" }}>
+                  {mapUrl && (
+                    <div className="gs-map-panel controls-mono" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "20px" }}>
+                      <img
+                        src={mapUrl}
+                        alt={raceInfo?.circuit}
+                        className="gs-map-img"
+                        onError={(e) => { e.currentTarget.style.display = "none" }}
+                      />
+                      <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase" }}>{fmtCircuit(raceInfo?.circuit)}</div>
+                    </div>
+                  )}
+                  <div className="gs-grid-panel controls-mono" style={{ padding: "20px", overflowY: "auto", maxHeight: "520px" }}>
+                    <div className="kicker" style={{ marginBottom: "14px", fontSize: "9px", color: "rgba(255,255,255,0.7)" }}>STARTING GRID</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                      {Array.from({ length: gridRows }, (_, row) => {
+                        const right = gridOrder[row * 2]
+                        const left  = gridOrder[row * 2 + 1]
+                        return (
+                          <div key={row} className="gs-row">
+                            <div className="gs-slot gs-left">
+                              {left && <GridCell driver={left} flip />}
+                            </div>
+                            <div className="gs-slot gs-right">
+                              {right && <GridCell driver={right} />}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {error && <div className="notice error">{error}</div>}
+                {error && <div className="notice error">{error}</div>}
 
-              {isFuture && (
-                <div className="notice future">
-                  <div style={{ fontSize: "11px", color: "#3671C6", fontWeight: "800", letterSpacing: "1.5px" }}>FUT</div>
-                  <div>
-                    <div style={{ fontSize: "10px", color: "#3671C6", letterSpacing: "2px", marginBottom: "3px" }}>PRE-QUALIFYING PREDICTION — 2026 FUTURE RACE</div>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{futureNote}</div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "26px" }}>
-                <div>
-                  <div className="kicker">{raceInfo?.year} FORMULA ONE{isFuture ? " — PREDICTED" : ""}</div>
-                  <div className="page-title">{raceInfo?.name || `${fmtCircuit(raceInfo?.circuit)} Grand Prix`}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "6px", letterSpacing: "0.5px" }}>
-                    PROFILE: <span style={{ color: "#fff" }}>{raceInfo?.profileLabel || modelStats?.profile_label}</span>
-                  </div>
-                </div>
-                {accuracy && (
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {[
-                      {label:"WINNER",val:accuracy.winner_correct ? "✓ YES" : "✗ NO",c:accuracy.winner_correct ? "#00A550" : "#E8003D"},
-                      {label:"PODIUM",val:accuracy.podium_correct ? "✓ YES" : "✗ NO",c:accuracy.podium_correct ? "#00A550" : "#E8003D"},
-                      {label:"SPEARMAN",val:accuracy.spearman,c:"#4488FF"},
-                      {label:"MAE",val:`${accuracy.mae}p`,c:"#FF6B00"},
-                      {label:"WITHIN 3",val:`${accuracy.tolerance?.within_3}%`,c:"#9A9AAC"},
-                    ].map((s) => (
-                      <div key={s.label} className="accuracy-chip" style={{ "--chip-color": s.c }}>
-                        <div className="chip-label">{s.label}</div>
-                        <div className="num" style={{ fontSize: "14px", fontWeight: "800", color: s.c, marginTop: "2px" }}>{s.val}</div>
-                      </div>
-                    ))}
+                {isFuture && (
+                  <div className="notice future">
+                    <div style={{ fontSize: "11px", color: "#3671C6", fontWeight: "800", letterSpacing: "1.5px" }}>FUT</div>
+                    <div>
+                      <div style={{ fontSize: "10px", color: "#3671C6", letterSpacing: "2px", marginBottom: "3px" }}>PRE-QUALIFYING PREDICTION — 2026 FUTURE RACE</div>
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{futureNote}</div>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "28px", alignItems: "start" }}>
-                <div>
-                  <Podium results={results} />
-                  <div className="card" style={{ padding: "16px" }}>
-                    <div className="card-label" style={{ marginBottom: "10px" }}>{isFuture ? "PREDICTION METHOD" : "ACTUAL POSITION KEY"}</div>
-                    {isFuture ? (
-                      <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.8" }}>
-                        {raceInfo?.profileLabel || modelStats?.profile_label}<br />
-                        2026 weighted 10x, 2025 weighted 3x<br />
-                        Equal grid, medium tyre, dry track assumed<br />
-                        No actual results available yet
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "26px" }}>
+                  <div>
+                    <div className="kicker">{raceInfo?.year} FORMULA ONE{isFuture ? " — PREDICTED" : ""}</div>
+                    <div className="page-title">{raceInfo?.name || `${fmtCircuit(raceInfo?.circuit)} Grand Prix`}</div>
+                    <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "6px", letterSpacing: "0.5px" }}>
+                      PROFILE: <span style={{ color: "#fff" }}>{raceInfo?.profileLabel || modelStats?.profile_label}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                    {accuracy && (
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        {[
+                          {label:"WINNER",val:accuracy.winner_correct ? "✓ YES" : "✗ NO",c:accuracy.winner_correct ? "#00A550" : "#E8003D"},
+                          {label:"PODIUM",val:accuracy.podium_correct ? "✓ YES" : "✗ NO",c:accuracy.podium_correct ? "#00A550" : "#E8003D"},
+                          {label:"SPEARMAN",val:accuracy.spearman,c:"#4488FF"},
+                          {label:"MAE",val:`${accuracy.mae}p`,c:"#FF6B00"},
+                          {label:"WITHIN 3",val:`${accuracy.tolerance?.within_3}%`,c:"#9A9AAC"},
+                        ].map((s) => (
+                          <div key={s.label} className="accuracy-chip" style={{ "--chip-color": s.c }}>
+                            <div className="chip-label">{s.label}</div>
+                            <div className="num" style={{ fontSize: "14px", fontWeight: "800", color: s.c, marginTop: "2px" }}>{s.val}</div>
+                          </div>
+                        ))}
                       </div>
-                    ) : [
-                      {color:"#00A550",label:"Exact match"},
-                      {color:"#4488FF",label:"Within 2 positions"},
-                      {color:"#FF6B00",label:"Within 4 positions"},
-                      {color:"#E8003D",label:"Missed by 5+"},
-                    ].map((k) => (
-                      <div key={k.label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                        <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: `${k.color}22`, border: `1px solid ${k.color}` }} />
-                        <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{k.label}</div>
+                    )}
+                    <div className="toggle-group">
+                      <span className="field-label">SHOW ACTUAL</span>
+                      <div
+                        onClick={() => setShowActual(!showActual)}
+                        className="toggle-track"
+                        style={{ background: showActual ? "var(--accent)" : "var(--border)" }}
+                      >
+                        <div className="toggle-knob" style={{ left: showActual ? "18px" : "2px" }} />
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div style={{ display: "grid", gridTemplateColumns: "32px 3px 1fr 90px 44px 50px", gap: "0 12px", padding: "6px 12px", fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px", borderBottom: "1px solid var(--border)", marginBottom: "6px" }}>
-                    <div style={{ textAlign: "center" }}>POS</div><div />
-                    <div>DRIVER</div><div>WIN PROB</div>
-                    <div style={{ textAlign: "center" }}>GRID</div>
-                    <div style={{ textAlign: "center" }}>{showActual && !isFuture ? "ACTUAL" : "—"}</div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "28px", alignItems: "start" }}>
+                  <div>
+                    <Podium results={results} />
+                    <div className="card" style={{ padding: "16px" }}>
+                      <div className="card-label" style={{ marginBottom: "10px" }}>{isFuture ? "PREDICTION METHOD" : "ACTUAL POSITION KEY"}</div>
+                      {isFuture ? (
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.8" }}>
+                          {raceInfo?.profileLabel || modelStats?.profile_label}<br />
+                          2026 weighted 10x, 2025 weighted 3x<br />
+                          Equal grid, medium tyre, dry track assumed<br />
+                          No actual results available yet
+                        </div>
+                      ) : [
+                        {color:"#00A550",label:"Exact match"},
+                        {color:"#4488FF",label:"Within 2 positions"},
+                        {color:"#FF6B00",label:"Within 4 positions"},
+                        {color:"#E8003D",label:"Missed by 5+"},
+                      ].map((k) => (
+                        <div key={k.label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                          <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: `${k.color}22`, border: `1px solid ${k.color}` }} />
+                          <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{k.label}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "32px 3px 1fr 90px 44px 50px", gap: "0 12px", padding: "6px 12px", fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px", borderBottom: "1px solid var(--border)", marginBottom: "6px" }}>
+                      <div style={{ textAlign: "center" }}>POS</div><div />
+                      <div>DRIVER</div><div>WIN PROB</div>
+                      <div style={{ textAlign: "center" }}>GRID</div>
+                      <div style={{ textAlign: "center" }}>{showActual && !isFuture ? "ACTUAL" : "—"}</div>
+                    </div>
+                    {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </>
       </div>
 
