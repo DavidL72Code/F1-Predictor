@@ -1052,6 +1052,10 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
     }
   }, [])
 
+  const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
+  const circuitMapFile = selectedRace?.circuit ? CIRCUIT_MAPS[selectedRace.circuit] : null
+  const circuitMapUrl = circuitMapFile ? `https://en.wikipedia.org/wiki/Special:FilePath/${circuitMapFile}` : null
+
   return (
     <div className="stage">
       <div className="frame" ref={frameRef}>
@@ -1061,45 +1065,65 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
         <div className="hero-fade" />
       </div>
 
-      <div className="controls controls-mono">
-        <div className="controls-head">
-          <div className="kicker" style={{ marginBottom: "4px" }}>SELECT RACE</div>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>
-            {modelStats?.profile_label || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.label}
-            {" "}·{" "}
-            {modelStats?.profile_description || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.description}
-          </div>
+      <div className="hero-overlay-layout">
+        <div className="controls-mono hero-map-side">
+          {circuitMapUrl ? (
+            <>
+              <img
+                src={circuitMapUrl}
+                alt={selectedRace?.name}
+                className="hero-circuit-img"
+                onError={(e) => { e.currentTarget.style.display = "none" }}
+              />
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>
+                {selectedRace?.name}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
+          )}
         </div>
-        <div className="controls-row">
-          <div className="field">
-            <span className="field-label">YEAR</span>
-            <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} className="select">
-              {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
-            </select>
-          </div>
-          <div className="field" style={{ flex: 1 }}>
-            <span className="field-label">CIRCUIT</span>
-            <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} className="select" style={{ flex: 1, minWidth: "220px" }}>
-              {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
-            </select>
-          </div>
-          <button onClick={predict} disabled={loading || !selectedRaceKey} className="hero-cta">
-            ▶ PREDICT RACE
-          </button>
-        </div>
-        {error && <div className="hero-error">{error}</div>}
-        <div className="hero-stat-chips">
-          {[
-            {label:"2016 WINNER ACC",val:"66.7%"},
-            {label:"2023 WINNER ACC",val:"86.4%"},
-            {label:"2024 SPEARMAN",val:"0.763"},
-            {label:"2024 MAE",val:"2.90p"},
-          ].map((s) => (
-            <div key={s.label} className="hero-stat-chip">
-              <div className="chip-label">{s.label}</div>
-              <div className="chip-value num">{s.val}</div>
+
+        <div className="controls-mono hero-selector-side">
+          <div className="controls-head">
+            <div className="kicker" style={{ marginBottom: "4px" }}>SELECT RACE</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>
+              {modelStats?.profile_label || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.label}
+              {" "}·{" "}
+              {modelStats?.profile_description || MODEL_PROFILES.find((p) => p.key === selectedProfile)?.description}
             </div>
-          ))}
+          </div>
+          <div className="controls-row">
+            <div className="field">
+              <span className="field-label">YEAR</span>
+              <select value={selectedYear} onChange={(e) => setYear(Number(e.target.value))} className="select">
+                {years.map((y) => <option key={y} value={y}>{y}{y === 2026 ? " (Current Season)" : ""}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <span className="field-label">CIRCUIT</span>
+              <select value={selectedRaceKey} onChange={(e) => setSelectedRaceKey(e.target.value)} className="select" style={{ flex: 1, minWidth: "220px" }}>
+                {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
+              </select>
+            </div>
+            <button onClick={predict} disabled={loading || !selectedRaceKey} className="hero-cta">
+              ▶ PREDICT RACE
+            </button>
+          </div>
+          {error && <div className="hero-error">{error}</div>}
+          <div className="hero-stat-chips">
+            {[
+              {label:"2016 WINNER ACC",val:"66.7%"},
+              {label:"2023 WINNER ACC",val:"86.4%"},
+              {label:"2024 SPEARMAN",val:"0.763"},
+              {label:"2024 MAE",val:"2.90p"},
+            ].map((s) => (
+              <div key={s.label} className="hero-stat-chip">
+                <div className="chip-label">{s.label}</div>
+                <div className="chip-value num">{s.val}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
