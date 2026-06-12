@@ -887,6 +887,7 @@ const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
 const F1_CDN = "https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9"
 
+// Fallback static images keyed by circuit slug (used if sportingmaps data hasn't loaded yet)
 const CIRCUIT_MAPS = {
   albert_park:   `${F1_CDN}/Australia_Circuit`,
   americas:      `${F1_CDN}/USA_Circuit`,
@@ -914,6 +915,34 @@ const CIRCUIT_MAPS = {
   zandvoort:     `${F1_CDN}/Netherlands_Circuit`,
 }
 
+// Maps our circuit slugs to the sportingmaps race name for data lookup
+const CIRCUIT_SLUG_TO_RACE_NAME = {
+  albert_park:   "Australian Grand Prix",
+  americas:      "United States Grand Prix",
+  bahrain:       "Bahrain Grand Prix",
+  baku:          "Azerbaijan Grand Prix",
+  catalunya:     "Barcelona-Catalunya Grand Prix",
+  hungaroring:   "Hungarian Grand Prix",
+  ifema_madrid:  "Spanish Grand Prix",
+  interlagos:    "São Paulo Grand Prix",
+  jeddah:        "Saudi Arabian Grand Prix",
+  losail:        "Qatar Grand Prix",
+  marina_bay:    "Singapore Grand Prix",
+  miami:         "Miami Grand Prix",
+  monaco:        "Monaco Grand Prix",
+  monza:         "Italian Grand Prix",
+  red_bull_ring: "Austrian Grand Prix",
+  rodriguez:     "Mexican Grand Prix",
+  shanghai:      "Chinese Grand Prix",
+  silverstone:   "British Grand Prix",
+  spa:           "Belgian Grand Prix",
+  suzuka:        "Japanese Grand Prix",
+  vegas:         "Las Vegas Grand Prix",
+  villeneuve:    "Canadian Grand Prix",
+  yas_marina:    "Abu Dhabi Grand Prix",
+  zandvoort:     "Dutch Grand Prix",
+}
+
 const GridCell = ({ driver, flip }) => {
   const tc = TEAM_COLORS[driver.team] || "#888"
   const border = flip ? { borderLeft: "none", borderRight: `3px solid ${tc}` } : { borderLeft: `3px solid ${tc}` }
@@ -928,7 +957,7 @@ const GridCell = ({ driver, flip }) => {
   )
 }
 
-function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, previewGrid }) {
+function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, previewGrid, circuitDb }) {
   const frameRef = useRef(null)
   const petalsRef = useRef(null)
 
@@ -971,7 +1000,9 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
   }, [])
 
   const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
-  const circuitMapUrl = selectedRace?.circuit ? (CIRCUIT_MAPS[selectedRace.circuit] || null) : null
+  const smRaceName = selectedRace?.circuit ? CIRCUIT_SLUG_TO_RACE_NAME[selectedRace.circuit] : null
+  const smData = smRaceName ? circuitDb[smRaceName] : null
+  const circuitMapUrl = smData?.track || (selectedRace?.circuit ? CIRCUIT_MAPS[selectedRace.circuit] : null)
   const gridOrder = previewGrid ? [...previewGrid].sort((a, b) => a.grid - b.grid) : []
   const gridRows = Math.ceil(gridOrder.length / 2)
 
@@ -1036,9 +1067,19 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
                 className="hero-circuit-img"
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>
-                {selectedRace?.name}
-              </div>
+              {smData ? (
+                <div className="hero-circuit-info">
+                  <div className="hero-circuit-info-name">{smData.name}</div>
+                  <div className="hero-circuit-info-row"><span>Circuit</span><span>{smData.circuit}</span></div>
+                  <div className="hero-circuit-info-row"><span>Round {smData.round}</span><span>{new Date(smData.race_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
+                  <div className="hero-circuit-info-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
+                  <div className="hero-circuit-info-row"><span>Laps</span><span>{smData.laps}</span></div>
+                  <div className="hero-circuit-info-row"><span>Circuit Length</span><span>{smData.circuit_length_miles} mi / {smData.circuit_length_km} km</span></div>
+                  <div className="hero-circuit-info-row"><span>Race Length</span><span>{smData.race_length_miles} mi / {smData.race_length_km} km</span></div>
+                </div>
+              ) : (
+                <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>{selectedRace?.name}</div>
+              )}
             </>
           ) : (
             <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
@@ -1083,6 +1124,7 @@ export default function App() {
   const [accuracy, setAccuracy] = useState(null)
   const [raceInfo, setRaceInfo] = useState(null)
   const [previewGrid, setPreviewGrid] = useState(null)
+  const [circuitDb, setCircuitDb] = useState({})
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
   const [analytics, setAnalytics] = useState(null)
@@ -1132,6 +1174,15 @@ export default function App() {
 
     cachedJson(`${API}/analytics`)
       .then(setAnalytics)
+      .catch(console.error)
+
+    fetch("https://www.sportingmaps.com/motorsports/formula_one/data")
+      .then((r) => r.json())
+      .then((rows) => {
+        const db = {}
+        rows.forEach((row) => { db[row.name] = row })
+        setCircuitDb(db)
+      })
       .catch(console.error)
 
     // Warm the cache for both profiles so the first profile toggle is instant.
@@ -1286,6 +1337,7 @@ export default function App() {
               selectedProfile={selectedProfile}
               error={error}
               previewGrid={previewGrid}
+              circuitDb={circuitDb}
             />
           )}
 

@@ -618,6 +618,43 @@ body {
   overflow-y: auto;
 }
 
+.hero-circuit-info {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-circuit-info-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+.hero-circuit-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 4px;
+}
+
+.hero-circuit-info-row span:first-child {
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.hero-circuit-info-row span:last-child {
+  color: rgba(255,255,255,0.85);
+  text-align: right;
+}
+
 @media (max-width: 720px) {
   .hero-overlay-layout {
     grid-template-columns: 1fr;
