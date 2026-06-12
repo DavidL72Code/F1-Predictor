@@ -962,12 +962,51 @@ const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
 function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error }) {
   const frameRef = useRef(null)
+  const petalsRef = useRef(null)
+
+  useEffect(() => {
+    const frame = frameRef.current
+    const stageEl = frame?.parentElement
+    const onScroll = rafThrottle(() => {
+      if (!frame || !stageEl) return
+      const scrollY = window.scrollY
+      if (scrollY > stageEl.offsetHeight) return
+      frame.style.transform = `translateY(${scrollY * 0.28}px)`
+    })
+    window.addEventListener("scroll", onScroll, { passive: true })
+
+    const container = petalsRef.current
+    if (container) {
+      for (let i = 0; i < 18; i++) {
+        const p = document.createElement("div")
+        p.className = "petal"
+        const size = 6 + Math.random() * 7
+        p.style.cssText = [
+          `left:${Math.random() * 100}%`,
+          `width:${size}px`,
+          `height:${size * 0.7}px`,
+          `animation-duration:${5 + Math.random() * 6}s`,
+          `animation-delay:${-Math.random() * 10}s`,
+          `--drift:${(Math.random() - 0.5) * 160}px`,
+          `--spin:${(Math.random() - 0.5) * 540}deg`,
+          `opacity:${0.55 + Math.random() * 0.4}`,
+        ].join(";")
+        container.appendChild(p)
+      }
+    }
+
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      if (container) container.innerHTML = ""
+      if (frame) frame.style.transform = ""
+    }
+  }, [])
 
   return (
     <div className="stage">
       <div className="frame" ref={frameRef}>
         <img className="layer hero-img" src={HERO_IMG_URL} alt="Formula 1 car" onError={(e) => { e.currentTarget.src = IMG_URL }} />
-        <div className="speedlines" />
+        <div className="hero-petals" ref={petalsRef} />
         <div className="vignette" />
         <div className="hero-fade" />
       </div>
