@@ -887,60 +887,33 @@ const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
 const F1_CDN = "https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9"
 
-// Fallback static images keyed by circuit slug (used if sportingmaps data hasn't loaded yet)
-const CIRCUIT_MAPS = {
-  albert_park:   `${F1_CDN}/Australia_Circuit`,
-  americas:      `${F1_CDN}/USA_Circuit`,
-  bahrain:       `${F1_CDN}/Bahrain_Circuit`,
-  baku:          `${F1_CDN}/Baku_Circuit`,
-  catalunya:     `${F1_CDN}/Spain_Circuit`,
-  hungaroring:   `${F1_CDN}/Hungary_Circuit`,
-  ifema_madrid:  "https://media.formula1.com/image/upload/c_fit,h_704/q_auto/v1740000000/common/f1/2026/track/2026trackmadringdetailed.webp",
-  interlagos:    `${F1_CDN}/Brazil_Circuit`,
-  jeddah:        `${F1_CDN}/Saudi_Arabia_Circuit`,
-  losail:        `${F1_CDN}/Qatar_Circuit`,
-  marina_bay:    `${F1_CDN}/Singapore_Circuit`,
-  miami:         `${F1_CDN}/Miami_Circuit`,
-  monaco:        `${F1_CDN}/Monaco_Circuit`,
-  monza:         `${F1_CDN}/Italy_Circuit`,
-  red_bull_ring: `${F1_CDN}/Austria_Circuit`,
-  rodriguez:     `${F1_CDN}/Mexico_Circuit`,
-  shanghai:      `${F1_CDN}/China_Circuit`,
-  silverstone:   `${F1_CDN}/Great_Britain_Circuit`,
-  spa:           `${F1_CDN}/Belgium_Circuit`,
-  suzuka:        `${F1_CDN}/Japan_Circuit`,
-  vegas:         `${F1_CDN}/Las_Vegas_Circuit`,
-  villeneuve:    `${F1_CDN}/Canada_Circuit`,
-  yas_marina:    `${F1_CDN}/Abu_Dhabi_Circuit`,
-  zandvoort:     `${F1_CDN}/Netherlands_Circuit`,
-}
-
-// Maps our circuit slugs to the sportingmaps race name for data lookup
-const CIRCUIT_SLUG_TO_RACE_NAME = {
-  albert_park:   "Australian Grand Prix",
-  americas:      "United States Grand Prix",
-  bahrain:       "Bahrain Grand Prix",
-  baku:          "Azerbaijan Grand Prix",
-  catalunya:     "Barcelona-Catalunya Grand Prix",
-  hungaroring:   "Hungarian Grand Prix",
-  ifema_madrid:  "Spanish Grand Prix",
-  interlagos:    "São Paulo Grand Prix",
-  jeddah:        "Saudi Arabian Grand Prix",
-  losail:        "Qatar Grand Prix",
-  marina_bay:    "Singapore Grand Prix",
-  miami:         "Miami Grand Prix",
-  monaco:        "Monaco Grand Prix",
-  monza:         "Italian Grand Prix",
-  red_bull_ring: "Austrian Grand Prix",
-  rodriguez:     "Mexican Grand Prix",
-  shanghai:      "Chinese Grand Prix",
-  silverstone:   "British Grand Prix",
-  spa:           "Belgian Grand Prix",
-  suzuka:        "Japanese Grand Prix",
-  vegas:         "Las Vegas Grand Prix",
-  villeneuve:    "Canadian Grand Prix",
-  yas_marina:    "Abu Dhabi Grand Prix",
-  zandvoort:     "Dutch Grand Prix",
+// Static circuit data keyed by our circuit slug
+const CIRCUIT_DATA = {
+  albert_park:   { name:"Australian Grand Prix", circuit:"Albert Park Grand Prix Circuit", round:1, race_date:"2026-03-08", city:"Melbourne", country:"Australia", laps:58, circuit_length_miles:3.28, circuit_length_km:5.278, race_length_miles:190.216, race_length_km:306.124, track:"https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_771/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Australia_Circuit" },
+  shanghai:      { name:"Chinese Grand Prix", circuit:"Shanghai International Circuit", round:2, race_date:"2026-03-15", city:"Shanghai", country:"China", laps:56, circuit_length_miles:3.387, circuit_length_km:5.451, race_length_miles:189.559, race_length_km:305.066, track:`${F1_CDN}/China_Circuit` },
+  suzuka:        { name:"Japanese Grand Prix", circuit:"Suzuka Circuit", round:3, race_date:"2026-03-29", city:"Suzuka", country:"Japan", laps:53, circuit_length_miles:3.608, circuit_length_km:5.807, race_length_miles:191.053, race_length_km:307.471, track:`${F1_CDN}/Japan_Circuit` },
+  miami:         { name:"Miami Grand Prix", circuit:"Miami International Autodrome", round:4, race_date:"2026-05-03", city:"Miami Gardens", country:"United States", laps:57, circuit_length_miles:3.363, circuit_length_km:5.412, race_length_miles:191.584, race_length_km:308.326, track:`${F1_CDN}/Miami_Circuit` },
+  villeneuve:    { name:"Canadian Grand Prix", circuit:"Circuit Gilles Villeneuve", round:5, race_date:"2026-05-24", city:"Montreal", country:"Canada", laps:70, circuit_length_miles:2.709, circuit_length_km:4.361, race_length_miles:189.694, race_length_km:305.27, track:`${F1_CDN}/Canada_Circuit` },
+  monaco:        { name:"Monaco Grand Prix", circuit:"Circuit de Monaco", round:6, race_date:"2026-06-07", city:"Monaco", country:"Monaco", laps:78, circuit_length_miles:2.074, circuit_length_km:3.337, race_length_miles:161.734, race_length_km:260.286, track:`${F1_CDN}/Monaco_Circuit` },
+  catalunya:     { name:"Barcelona-Catalunya Grand Prix", circuit:"Circuit de Barcelona-Catalunya", round:7, race_date:"2026-06-14", city:"Montmeló", country:"Spain", laps:66, circuit_length_miles:2.894, circuit_length_km:4.657, race_length_miles:190.908, race_length_km:307.236, track:`${F1_CDN}/Spain_Circuit` },
+  red_bull_ring: { name:"Austrian Grand Prix", circuit:"Red Bull Ring", round:8, race_date:"2026-06-28", city:"Spielberg", country:"Austria", laps:71, circuit_length_miles:2.683, circuit_length_km:4.318, race_length_miles:190.42, race_length_km:306.452, track:`${F1_CDN}/Austria_Circuit` },
+  silverstone:   { name:"British Grand Prix", circuit:"Silverstone Circuit", round:9, race_date:"2026-07-05", city:"Silverstone", country:"United Kingdom", laps:52, circuit_length_miles:3.66, circuit_length_km:5.891, race_length_miles:190.263, race_length_km:306.198, track:`${F1_CDN}/Great_Britain_Circuit` },
+  spa:           { name:"Belgian Grand Prix", circuit:"Circuit de Spa-Francorchamps", round:10, race_date:"2026-07-19", city:"Stavelot", country:"Belgium", laps:44, circuit_length_miles:4.352, circuit_length_km:7.004, race_length_miles:191.398, race_length_km:308.052, track:`${F1_CDN}/Belgium_Circuit` },
+  hungaroring:   { name:"Hungarian Grand Prix", circuit:"Hungaroring", round:11, race_date:"2026-07-26", city:"Mogyoród", country:"Hungary", laps:70, circuit_length_miles:2.722, circuit_length_km:4.381, race_length_miles:190.531, race_length_km:306.63, track:`${F1_CDN}/Hungary_Circuit` },
+  zandvoort:     { name:"Dutch Grand Prix", circuit:"Circuit Zandvoort", round:12, race_date:"2026-08-23", city:"Zandvoort", country:"Netherlands", laps:72, circuit_length_miles:2.646, circuit_length_km:4.259, race_length_miles:190.504, race_length_km:306.587, track:`${F1_CDN}/Netherlands_Circuit` },
+  monza:         { name:"Italian Grand Prix", circuit:"Autodromo Nazionale Monza", round:13, race_date:"2026-10-06", city:"Monza", country:"Italy", laps:53, circuit_length_miles:3.6, circuit_length_km:5.793, race_length_miles:190.596, race_length_km:306.72, track:`${F1_CDN}/Italy_Circuit` },
+  ifema_madrid:  { name:"Spanish Grand Prix", circuit:"Madring", round:14, race_date:"2026-09-13", city:"Madrid", country:"Spain", laps:56, circuit_length_miles:3.401, circuit_length_km:5.474, race_length_miles:190.478, race_length_km:306.544, track:"https://media.formula1.com/image/upload/c_fit,h_704/q_auto/v1740000000/common/f1/2026/track/2026trackmadringdetailed.webp" },
+  baku:          { name:"Azerbaijan Grand Prix", circuit:"Baku City Circuit", round:15, race_date:"2026-09-26", city:"Baku", country:"Azerbaijan", laps:51, circuit_length_miles:3.73, circuit_length_km:6.003, race_length_miles:190.17, race_length_km:306.049, track:`${F1_CDN}/Baku_Circuit` },
+  marina_bay:    { name:"Singapore Grand Prix", circuit:"Marina Bay Street Circuit", round:16, race_date:"2026-10-11", city:"Singapore", country:"Singapore", laps:62, circuit_length_miles:3.07, circuit_length_km:4.94, race_length_miles:190.228, race_length_km:306.143, track:`${F1_CDN}/Singapore_Circuit` },
+  americas:      { name:"United States Grand Prix", circuit:"Circuit of the Americas", round:17, race_date:"2026-10-25", city:"Austin", country:"United States", laps:56, circuit_length_miles:3.426, circuit_length_km:5.513, race_length_miles:191.634, race_length_km:308.405, track:`${F1_CDN}/USA_Circuit` },
+  rodriguez:     { name:"Mexican Grand Prix", circuit:"Autódromo Hermanos Rodríguez", round:18, race_date:"2026-11-01", city:"Mexico City", country:"Mexico", laps:71, circuit_length_miles:2.674, circuit_length_km:4.304, race_length_miles:189.738, race_length_km:305.354, track:`${F1_CDN}/Mexico_Circuit` },
+  interlagos:    { name:"São Paulo Grand Prix", circuit:"Autódromo José Carlos Pace", round:19, race_date:"2026-11-08", city:"São Paulo", country:"Brazil", laps:71, circuit_length_miles:2.677, circuit_length_km:4.309, race_length_miles:190.064, race_length_km:305.879, track:`${F1_CDN}/Brazil_Circuit` },
+  vegas:         { name:"Las Vegas Grand Prix", circuit:"Las Vegas Strip Circuit", round:20, race_date:"2026-11-21", city:"Las Vegas", country:"United States", laps:50, circuit_length_miles:3.853, circuit_length_km:6.201, race_length_miles:192.599, race_length_km:309.958, track:`${F1_CDN}/Las_Vegas_Circuit` },
+  losail:        { name:"Qatar Grand Prix", circuit:"Lusail International Circuit", round:21, race_date:"2026-11-29", city:"Lusail", country:"Qatar", laps:57, circuit_length_miles:3.367, circuit_length_km:5.419, race_length_miles:191.762, race_length_km:308.611, track:`${F1_CDN}/Qatar_Circuit` },
+  yas_marina:    { name:"Abu Dhabi Grand Prix", circuit:"Yas Marina Circuit", round:22, race_date:"2026-12-06", city:"Yas Marina", country:"United Arab Emirates", laps:58, circuit_length_miles:3.281, circuit_length_km:5.281, race_length_miles:190.253, race_length_km:306.183, track:`${F1_CDN}/Abu_Dhabi_Circuit` },
+  // historical circuits not in 2026 calendar
+  bahrain:       { name:"Bahrain Grand Prix", circuit:"Bahrain International Circuit", city:"Sakhir", country:"Bahrain", laps:57, circuit_length_miles:3.363, circuit_length_km:5.412, track:`${F1_CDN}/Bahrain_Circuit` },
+  jeddah:        { name:"Saudi Arabian Grand Prix", circuit:"Jeddah Corniche Circuit", city:"Jeddah", country:"Saudi Arabia", laps:50, circuit_length_miles:3.836, circuit_length_km:6.174, track:`${F1_CDN}/Saudi_Arabia_Circuit` },
 }
 
 const GridCell = ({ driver, flip }) => {
@@ -957,7 +930,7 @@ const GridCell = ({ driver, flip }) => {
   )
 }
 
-function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, previewGrid, circuitDb }) {
+function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey, setSelectedRaceKey, predict, loading, modelStats, selectedProfile, error, previewGrid }) {
   const frameRef = useRef(null)
   const petalsRef = useRef(null)
 
@@ -1000,9 +973,8 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
   }, [])
 
   const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
-  const smRaceName = selectedRace?.circuit ? CIRCUIT_SLUG_TO_RACE_NAME[selectedRace.circuit] : null
-  const smData = smRaceName ? circuitDb[smRaceName] : null
-  const circuitMapUrl = smData?.track || (selectedRace?.circuit ? CIRCUIT_MAPS[selectedRace.circuit] : null)
+  const smData = selectedRace?.circuit ? CIRCUIT_DATA[selectedRace.circuit] : null
+  const circuitMapUrl = smData?.track || null
   const gridOrder = previewGrid ? [...previewGrid].sort((a, b) => a.grid - b.grid) : []
   const gridRows = Math.ceil(gridOrder.length / 2)
 
@@ -1122,7 +1094,6 @@ export default function App() {
   const [accuracy, setAccuracy] = useState(null)
   const [raceInfo, setRaceInfo] = useState(null)
   const [previewGrid, setPreviewGrid] = useState(null)
-  const [circuitDb, setCircuitDb] = useState({})
   const [loading, setLoading] = useState(false)
   const [showActual, setShowActual] = useState(true)
   const [analytics, setAnalytics] = useState(null)
@@ -1174,14 +1145,6 @@ export default function App() {
       .then(setAnalytics)
       .catch(console.error)
 
-    fetch("https://www.sportingmaps.com/motorsports/formula_one/data")
-      .then((r) => r.json())
-      .then((rows) => {
-        const db = {}
-        rows.forEach((row) => { db[row.name] = row })
-        setCircuitDb(db)
-      })
-      .catch(console.error)
 
     // Warm the cache for both profiles so the first profile toggle is instant.
     MODEL_PROFILES.forEach((p) => {
@@ -1335,7 +1298,6 @@ export default function App() {
               selectedProfile={selectedProfile}
               error={error}
               previewGrid={previewGrid}
-              circuitDb={circuitDb}
             />
           )}
 
