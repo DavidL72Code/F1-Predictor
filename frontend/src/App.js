@@ -1060,27 +1060,25 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
 
         <div className="controls-mono hero-map-side">
           {circuitMapUrl ? (
-            <>
+            <div className="hero-map-wrap">
               <img
                 src={circuitMapUrl}
                 alt={selectedRace?.name}
                 className="hero-circuit-img"
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
-              {smData ? (
-                <div className="hero-circuit-info">
-                  <div className="hero-circuit-info-name">{smData.name}</div>
-                  <div className="hero-circuit-info-row"><span>Circuit</span><span>{smData.circuit}</span></div>
-                  <div className="hero-circuit-info-row"><span>Round {smData.round}</span><span>{new Date(smData.race_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
-                  <div className="hero-circuit-info-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
-                  <div className="hero-circuit-info-row"><span>Laps</span><span>{smData.laps}</span></div>
-                  <div className="hero-circuit-info-row"><span>Circuit Length</span><span>{smData.circuit_length_miles} mi / {smData.circuit_length_km} km</span></div>
-                  <div className="hero-circuit-info-row"><span>Race Length</span><span>{smData.race_length_miles} mi / {smData.race_length_km} km</span></div>
+              {smData && (
+                <div className="hero-circuit-popup">
+                  <div className="hero-circuit-popup-name">{smData.name}</div>
+                  <div className="hero-circuit-popup-row"><span>Circuit</span><span>{smData.circuit}</span></div>
+                  <div className="hero-circuit-popup-row"><span>Round {smData.round}</span><span>{new Date(smData.race_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
+                  <div className="hero-circuit-popup-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
+                  <div className="hero-circuit-popup-row"><span>Laps</span><span>{smData.laps}</span></div>
+                  <div className="hero-circuit-popup-row"><span>Circuit Length</span><span>{smData.circuit_length_miles} mi / {smData.circuit_length_km} km</span></div>
+                  <div className="hero-circuit-popup-row"><span>Race Length</span><span>{smData.race_length_miles} mi / {smData.race_length_km} km</span></div>
                 </div>
-              ) : (
-                <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center" }}>{selectedRace?.name}</div>
               )}
-            </>
+            </div>
           ) : (
             <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", letterSpacing: "2px", textAlign: "center" }}>SELECT A RACE</div>
           )}
