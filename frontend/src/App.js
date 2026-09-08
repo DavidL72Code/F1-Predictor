@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts"
+import ScrollIntro from "./ScrollIntro"
+import AnalyticsPage from "./AnalyticsPage"
+import UnderTheHoodPage from "./UnderTheHoodPage"
+import { Podium, GridRow, AccuracyKey } from "./RaceResult"
 import "./App.css"
 
 const API = process.env.REACT_APP_API_URL?.replace(/\/$/, "")
@@ -8,7 +11,6 @@ const BACKEND_KEEPALIVE_MS = 4 * 60 * 1000
 
 const surname = (n) => n.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ").split(" ").pop()
 const fmtCircuit = (c) => c?.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || ""
-const posColor = (i) => i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#2A2A3A"
 
 const TEAM_COLORS = {
   red_bull:"#3671C6",mercedes:"#27F4D2",ferrari:"#E8002D",mclaren:"#FF8000",
@@ -32,9 +34,26 @@ const MODEL_PROFILES = [
   },
 ]
 
+/* Scores shown on the race selector, read from /model/stats?profile=…
+   so they follow the active profile. `objective_metric` says which one that
+   profile is actually tuned for, and that chip is flagged. */
+const HERO_CHIP_METRICS = [
+  { key: "winner_acc", label: "WINNER ACC", fmt: (v) => `${v.toFixed(1)}%` },
+  { key: "podium_acc", label: "PODIUM ACC", fmt: (v) => `${v.toFixed(1)}%` },
+  { key: "spearman", label: "SPEARMAN", fmt: (v) => v.toFixed(3) },
+  { key: "mae", label: "MAE", fmt: (v) => `${v.toFixed(2)}p` },
+]
+
 const TRACK_PATH = "M 128 56 H 356 Q 416 56 416 116 V 204 Q 416 264 356 264 H 104 Q 44 264 44 204 V 116 Q 44 56 104 56 H 128"
 const FINISH_LINE_X = 128
 const LOADER_LAP_MS = 3200
+
+/* Floor on how long the loader stays up, so a fast response does not flash the
+   spinner and vanish. Deliberately NOT the full lap: predictions were padded to
+   LOADER_LAP_MS so the car could complete a circuit, which meant a 300ms answer
+   still cost the user 3.2s. The lap is the animation's business, not the
+   request's — the car can leave mid-lap. */
+const MIN_LOADER_MS = 600
 
 const readErrorMessage = async (response, fallback) => {
   try {
@@ -75,13 +94,16 @@ const cachedJson = (url) => {
 
 /* Coalesce a scroll/resize handler to at most one run per animation frame,
    so multiple listeners don't each force a layout on every scroll event. */
+/* Cancel-and-reschedule rather than a boolean latch. With a latch, a frame
+   requested while the document is hidden never runs, `scheduled` stays true,
+   and the handler is dead for good. This version re-arms on every call, so it
+   self-heals as soon as frames resume. */
 const rafThrottle = (fn) => {
-  let scheduled = false
+  let handle = 0
   return (...args) => {
-    if (scheduled) return
-    scheduled = true
-    requestAnimationFrame(() => {
-      scheduled = false
+    if (handle) cancelAnimationFrame(handle)
+    handle = requestAnimationFrame(() => {
+      handle = 0
       fn(...args)
     })
   }
@@ -91,23 +113,32 @@ const rafThrottle = (fn) => {
 const ScrollProgress = () => {
   const barRef = useRef(null)
   useEffect(() => {
+    /* scrollHeight forces layout, so it is measured only when the page can
+       actually have changed size — never on the scroll path. That leaves the
+       scroll handler as a single style write, cheap enough to run
+       synchronously and immune to a stalled animation frame. */
+    let max = 0
+    const measure = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight
+    }
     const update = () => {
       const bar = barRef.current
       if (!bar) return
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      bar.style.width = max > 0 ? `${(window.scrollY / max) * 100}%` : "0%"
+      bar.style.transform = `scaleX(${max > 0 ? Math.min(window.scrollY / max, 1) : 0})`
     }
-    const onScroll = rafThrottle(update)
+    const onScroll = update
+    const onResize = () => { measure(); update() }
+    measure()
     update()
     window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+    window.addEventListener("resize", onResize)
     // Page height also changes on tab switch / content load with no scroll
     // event — observe the body so the bar stays in sync.
-    const observer = new ResizeObserver(onScroll)
+    const observer = new ResizeObserver(onResize)
     observer.observe(document.body)
     return () => {
       window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
+      window.removeEventListener("resize", onResize)
       observer.disconnect()
     }
   }, [])
@@ -236,658 +267,21 @@ const RaceCarLoader = () => {
   )
 }
 
-const Podium = ({ results }) => {
-  if (!results?.length) return null
-  const [p1, p2, p3] = [results[0], results[1], results[2]]
-  const order = [p2, p1, p3]
-  const heights = [80, 112, 60]
-  const pos = [2, 1, 3]
-  const colors = ["#C0C0C0", "#FFD700", "#CD7F32"]
-  return (
-    <div style={{ marginBottom: "28px" }}>
-      <div className="card-label">PREDICTED PODIUM</div>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: "4px" }}>
-        {order.map((driver, i) => (
-          <div key={driver.driver} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-            <div style={{ textAlign: "center", width: "96px" }}>
-              <div style={{ fontSize: "13px", fontWeight: "800", color: "#fff" }}>{surname(driver.driver)}</div>
-              <div style={{ fontSize: "9px", color: TEAM_COLORS[driver.team] || "#888", letterSpacing: "0.5px", marginTop: "2px" }}>{driver.team.replace(/_/g, " ").toUpperCase()}</div>
-              <div style={{ fontSize: "11px", color: "var(--text-faint)", marginTop: "2px" }}>{driver.win_probability}% win prob</div>
-            </div>
-            <div
-              style={{
-                width: "92px",
-                height: `${heights[i]}px`,
-                background: `linear-gradient(180deg,${TEAM_COLORS[driver.team] || "#888"}22,${TEAM_COLORS[driver.team] || "#888"}08)`,
-                border: `1px solid ${TEAM_COLORS[driver.team] || "#888"}55`,
-                borderBottom: "none",
-                borderRadius: "6px 6px 0 0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-              }}
-            >
-              <div style={{ fontSize: "38px", fontWeight: "800", color: colors[i], opacity: 0.5 }}>{pos[i]}</div>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", background: TEAM_COLORS[driver.team] || "#888" }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ height: "2px", background: "linear-gradient(90deg,transparent,#E8003D33,transparent)" }} />
-    </div>
-  )
-}
-
-const GridRow = ({ r, i, showActual }) => {
-  const tc = TEAM_COLORS[r.team] || "#888"
-  const diff = r.actual_position ? Math.abs(r.predicted_rank - r.actual_position) : null
-  const color = diff === null ? "#333" : diff === 0 ? "#00A550" : diff <= 2 ? "#4488FF" : diff <= 4 ? "#FF6B00" : "#E8003D"
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "32px 3px 1fr 90px 44px 50px",
-        alignItems: "center",
-        gap: "0 12px",
-        padding: "8px 12px",
-        marginBottom: "3px",
-        borderRadius: "5px",
-        background: i < 3 ? `${posColor(i)}08` : "var(--surface)",
-        borderLeft: `3px solid ${i < 3 ? posColor(i) : tc}`,
-      }}
-    >
-      <div className="num" style={{ fontSize: i < 3 ? "15px" : "12px", fontWeight: "800", color: posColor(i), textAlign: "center" }}>{i + 1}</div>
-      <div style={{ width: "3px", height: "32px", background: tc, borderRadius: "2px" }} />
-      <div>
-        <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>{surname(r.driver)}</div>
-        <div style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.5px" }}>{r.team.replace(/_/g, " ").toUpperCase()} · +{r.quali_gap?.toFixed(3)}s</div>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        <div style={{ flex: 1, height: "3px", background: "var(--border)", borderRadius: "2px", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${Math.min(r.win_probability * 2, 100)}%`, background: tc, borderRadius: "2px" }} />
-        </div>
-        <div className="num" style={{ fontSize: "10px", color: tc, fontWeight: "700", minWidth: "30px", textAlign: "right" }}>{r.win_probability}%</div>
-      </div>
-      <div className="num" style={{ textAlign: "center", fontSize: "10px", color: "var(--text-faint)" }}>P{r.grid}</div>
-      {showActual && r.actual_position ? (
-        <div className="num" style={{ textAlign: "center", padding: "3px 4px", borderRadius: "4px", background: `${color}15`, border: `1px solid ${color}55`, color, fontSize: "10px", fontWeight: "700" }}>P{r.actual_position}</div>
-      ) : (
-        <div style={{ textAlign: "center", fontSize: "10px", color: "var(--border)" }}>—</div>
-      )}
-    </div>
-  )
-}
-
-const Reveal = ({ children, delay = 0 }) => {
-  const ref = useRef(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { el.classList.add("in"); obs.unobserve(el) } },
-      { threshold: 0.06 }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-  return <div ref={ref} className="reveal" style={{ "--reveal-delay": `${delay}s` }}>{children}</div>
-}
-
-const AnalyticsHero = ({ children }) => {
-  const heroRef = useRef(null)
-  const contentRef = useRef(null)
-  const slRef = useRef(null)
-
-  useEffect(() => {
-    const el = slRef.current
-    if (el) {
-      for (let i = 0; i < 30; i++) {
-        const line = document.createElement("div")
-        line.className = "sline"
-        line.style.cssText = `top:${Math.random() * 100}%;width:${60 + Math.random() * 200}px;animation-duration:${0.28 + Math.random() * 0.6}s;animation-delay:${-Math.random() * 1.5}s;opacity:${0.05 + Math.random() * 0.18};`
-        el.appendChild(line)
-      }
-    }
-
-    const onScroll = rafThrottle(() => {
-      const hero = heroRef.current
-      const content = contentRef.current
-      if (!hero || !content) return
-      const rect = hero.getBoundingClientRect()
-      if (rect.bottom < 0 || rect.top > window.innerHeight) return // off-screen: skip
-      const progress = -rect.top / Math.max(rect.height, 1)
-      content.style.transform = `translate3d(0, ${progress * 48}px, 0) scale(${1 + progress * 0.04})`
-      el.style.transform = `translate3d(0, ${progress * 28}px, 0)`
-    })
-
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => {
-      if (el) el.innerHTML = ""
-      window.removeEventListener("scroll", onScroll)
-    }
-  }, [])
-
-  return (
-    <div className="analytics-hero" ref={heroRef}>
-      <div className="speedlines" ref={slRef} />
-      <div className="vignette" />
-      <div className="analytics-hero-content" ref={contentRef}>{children}</div>
-    </div>
-  )
-}
-
-const AnalyticsPage = ({ analytics, modelStats, selectedProfile }) => {
-  const [metric, setMetric] = useState("winner_acc")
-  if (!analytics) return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}><div style={{ fontSize: "12px", color: "var(--text-muted)", letterSpacing: "3px" }}>LOADING ANALYTICS...</div></div>
-  const benchmark = modelStats?.feature_search_benchmark
-  const history = analytics.with_gap || []
-  const benchRows = benchmark?.rows || []
-  const benchmarkYears = benchmark?.years || []
-  const METRICS = {
-    winner_acc:{label:"Winner Accuracy",fmt:(v)=>`${Number(v).toFixed(1)}%`},
-    podium_acc:{label:"Podium Accuracy",fmt:(v)=>`${Number(v).toFixed(1)}%`},
-    spearman:{label:"Spearman",fmt:(v)=>Number(v).toFixed(3)},
-    mae:{label:"MAE",fmt:(v)=>Number(v).toFixed(2)},
-    ndcg:{label:"NDCG",fmt:(v)=>Number(v).toFixed(3)},
-    within_3:{label:"Within 3 Pos",fmt:(v)=>`${Number(v).toFixed(1)}%`},
-  }
-  const MODEL_META = [
-    { key:"baseline", chartKey:"Baseline", label:"Ridge Baseline", color:"#4488FF", desc:"Linear — stable, conservative" },
-    { key:"xgboost", chartKey:"XGBoost", label:"XGBoost", color:"#E8003D", desc:"Gradient-boosted trees — non-linear patterns" },
-    { key:"ensemble_winner", chartKey:"Ens.Winner", label:"Ensemble (Winner)", color:"#FFD700", desc:"α-blend tuned for P1 hit rate — powers SIMULATE RACE" },
-    { key:"ensemble_position", chartKey:"Ens.Position", label:"Ensemble (Position)", color:"#00A550", desc:"α-blend tuned for full-grid ranking (Spearman)" },
-  ]
-  const SUMMARY_METRICS = ["winner_acc", "podium_acc", "spearman", "mae"]
-  const liveFeatures = modelStats?.features || []
-  const activeProfile = MODEL_PROFILES.find((profile) => profile.key === selectedProfile)
-  const profileLabel = modelStats?.profile_label || activeProfile?.label || "Profile"
-  const objectiveMetric = modelStats?.objective_metric
-  const objectiveValue = modelStats?.objective_value
-  const selectedMethod = modelStats?.selected_method
-  const avgFromRows = (rows, modelKey, metricKey) => {
-    const vals = rows.filter((d) => d[modelKey]?.[metricKey] !== undefined && d[modelKey]?.[metricKey] !== null)
-    if (!vals.length) return null
-    return vals.reduce((sum, row) => sum + row[modelKey][metricKey], 0) / vals.length
-  }
-  const averages = MODEL_META.map((model) => ({
-    ...model,
-    stats: Object.fromEntries(
-      SUMMARY_METRICS.map((metricKey) => [
-        metricKey,
-        benchmark?.averages?.[model.key]?.[metricKey] ?? avgFromRows(benchRows.length ? benchRows : history, model.key, metricKey),
-      ])
-    ),
-  }))
-  const m = METRICS[metric]
-  const chartData = history.map((d) => ({
-    year: d.test_year,
-    Baseline: d.baseline[metric],
-    XGBoost: d.xgboost[metric],
-    "Ens.Winner": d.ensemble_winner?.[metric],
-    "Ens.Position": d.ensemble_position?.[metric],
-    is2022: d.test_year === 2022,
-  }))
-  const MODEL_COLORS = { Baseline:"#4488FF", XGBoost:"#E8003D", "Ens.Winner":"#FFD700", "Ens.Position":"#00A550" }
-  const CustomBar = (props) => {
-    const { x, y, width, height, fill, payload, dataKey } = props
-    return <rect x={x} y={y} width={width} height={height} fill={fill} opacity={payload?.is2022 && dataKey === "XGBoost" ? 0.4 : 1} rx={2} />
-  }
-  return (
-    <div>
-      <AnalyticsHero>
-        <div className="kicker">MODEL ANALYSIS</div>
-        <div className="page-title">Model Performance &amp; Selection</div>
-        <div className="page-sub">
-          {history.length} seasons of rolling evaluation · <span style={{ color: "#fff" }}>{profileLabel}</span> profile · 4 models
-        </div>
-      </AnalyticsHero>
-      <div className="page">
-
-      {/* ── Active profile ── */}
-      <Reveal>
-        <div className="card" style={{ borderLeft: "3px solid var(--accent)", padding: "18px 20px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap", marginBottom: "10px" }}>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: "#fff" }}>{profileLabel}</span>
-            {objectiveMetric && objectiveValue != null && (
-              <span className="num" style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                {METRICS[objectiveMetric]?.label || objectiveMetric}: <span style={{ color: "#fff", fontWeight: "700" }}>{METRICS[objectiveMetric]?.fmt ? METRICS[objectiveMetric].fmt(objectiveValue) : objectiveValue}</span>
-                {selectedMethod ? ` · ${selectedMethod}` : ""}
-              </span>
-            )}
-            {benchmarkYears.length > 0 && (
-              <span style={{ fontSize: "11px", color: "var(--text-faint)" }}>selected on {benchmarkYears.join("–")}</span>
-            )}
-            <span style={{ fontSize: "11px", color: "var(--text-faint)", marginLeft: "auto" }}>{liveFeatures.length || 10} live features</span>
-          </div>
-          <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-            {liveFeatures.map((feature) => (
-              <span key={feature} style={{ fontSize: "10px", color: "var(--text-muted)", padding: "4px 9px", border: "1px solid var(--border)", borderRadius: "12px", background: "var(--surface-2)" }}>
-                {feature.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
-        </div>
-      </Reveal>
-
-      {/* ── Benchmark averages table ── */}
-      <Reveal delay={0.05}>
-        <div className="card">
-          <div className="card-label">
-            BENCHMARK AVERAGES — FEATURE SELECTION WINDOW ({benchmarkYears.length ? benchmarkYears.join("–") : "2022–2024"})
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <div style={{ minWidth: "560px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(190px, 1.4fr) repeat(4, 1fr)", gap: "0 12px", padding: "6px 12px", fontSize: "9px", color: "var(--text-faint)", letterSpacing: "1.5px", borderBottom: "1px solid var(--border)" }}>
-                <div>MODEL</div>
-                {SUMMARY_METRICS.map((k) => <div key={k} style={{ textAlign: "right" }}>{METRICS[k].label.toUpperCase()}</div>)}
-              </div>
-              {averages.map((model) => {
-                const isSelected = model.key === selectedMethod
-                return (
-                  <div key={model.key} style={{ display: "grid", gridTemplateColumns: "minmax(190px, 1.4fr) repeat(4, 1fr)", gap: "0 12px", alignItems: "center", padding: "9px 12px", borderRadius: "5px", background: isSelected ? "rgba(232,0,61,0.06)" : "transparent", borderLeft: `3px solid ${isSelected ? model.color : "transparent"}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: model.color, flexShrink: 0 }} />
-                      <span style={{ fontSize: "12px", fontWeight: "600", color: isSelected ? "#fff" : "var(--text-muted)" }}>{model.label}</span>
-                      {isSelected && <span style={{ fontSize: "8px", color: "var(--accent)", background: "rgba(232,0,61,0.12)", padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px" }}>LIVE</span>}
-                    </div>
-                    {SUMMARY_METRICS.map((k) => (
-                      <div key={k} className="num" style={{ textAlign: "right", fontSize: "12px", fontWeight: "700", color: isSelected ? "#fff" : "var(--text-muted)" }}>
-                        {model.stats[k] === null ? "n/a" : METRICS[k].fmt(model.stats[k])}
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </Reveal>
-
-      {/* ── Why 2022–2024 selected this model ── */}
-      <Reveal delay={0.05}>
-        <div className="card" style={{ borderLeft: "3px solid var(--blue)" }}>
-          <div className="card-label">WHY THE 2022–2024 WINDOW SELECTED THIS MODEL</div>
-          <div className="prose" style={{ fontSize: "12.5px", marginBottom: "14px" }}>
-            Model and feature selection used only the three most recent completed seasons, while the chart below shows the full rolling record (2016–2026).
-            Recent years decide the live model because a feature that worked in 2017 but not 2023 should not influence today's predictions.
-            Each test is a strict temporal split — train on everything up to year N−1, predict year N — so nothing leaks from the future.
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px" }}>
-            {[
-              { year: "2022", tag: "REG RESET", color: "#E8003D", desc: "New ground-effect rules expired old patterns — XGBoost (50.0% winner acc) fell below Ridge (54.5%). Tests drift survival." },
-              { year: "2023", tag: "DOMINANT", color: "#FF8000", desc: "Red Bull dominance — qualifying pace maps cleanly to wins, Ridge hit 86.4%. Tests the easy case isn't fumbled." },
-              { year: "2024", tag: "COMPETITIVE", color: "#3671C6", desc: "Four teams in the front fight — separating P1–P4 needs non-linear features. Tests close-field resolution." },
-            ].map((r) => (
-              <div key={r.year} style={{ display: "flex", alignItems: "baseline", gap: "10px", padding: "9px 12px", background: "var(--surface-2)", borderRadius: "5px", borderLeft: `3px solid ${r.color}` }}>
-                <span className="num" style={{ fontSize: "13px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>{r.year}</span>
-                <span style={{ fontSize: "8px", color: r.color, background: `${r.color}18`, padding: "2px 6px", borderRadius: "3px", fontWeight: "700", letterSpacing: "1px", flexShrink: 0 }}>{r.tag}</span>
-                <span className="prose" style={{ fontSize: "12px" }}>{r.desc}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px", marginBottom: "12px" }}>
-            <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "5px", borderTop: "2px solid #FFD700" }}>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: "#FFD700", marginBottom: "6px" }}>Winner-Centric → Ensemble (Winner)</div>
-              <div className="num" style={{ fontSize: "12px", color: "#fff", marginBottom: "5px" }}>70.8% winner acc · 0.670 Spearman</div>
-              <div style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.6" }}>Picks weekend-pace features (quali gap, driver form, circuit overperformance) that identify who is fastest right now.</div>
-            </div>
-            <div style={{ padding: "12px 14px", background: "var(--surface-2)", borderRadius: "5px", borderTop: "2px solid #00A550" }}>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: "#00A550", marginBottom: "6px" }}>Full Order → Ensemble (Position)</div>
-              <div className="num" style={{ fontSize: "12px", color: "#fff", marginBottom: "5px" }}>0.684 Spearman · 49.0% winner acc</div>
-              <div style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.6" }}>Picks long-run strength features (team win rate, constructor rank, circuit history) that order the whole grid.</div>
-            </div>
-          </div>
-          <div className="prose" style={{ fontSize: "12px", padding: "10px 12px", background: "var(--surface-3)", borderRadius: "5px" }}>
-            <strong>The tradeoff:</strong> Ridge and XGBoost fail differently — Ridge misses non-linear interactions, XGBoost is fragile under regulation drift — so the search blends them (α tuned per objective). Maximizing P1 hit rate and maximizing full-grid order need different features and weights, which is why two profiles exist instead of one.
-          </div>
-        </div>
-      </Reveal>
-
-      {/* ── Full history chart ── */}
-      <Reveal>
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
-            <div className="card-label" style={{ marginBottom: 0 }}>
-              {m.label.toUpperCase()} BY SEASON — FULL ROLLING EVALUATION 2016–2026
-              <span style={{ color: "var(--text-faint)", fontWeight: "400", letterSpacing: "0.5px" }}> (2022 XGBoost faded = concept drift)</span>
-            </div>
-            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-              {Object.entries(METRICS).map(([key]) => (
-                <button
-                  key={key}
-                  onClick={() => setMetric(key)}
-                  className={`profile-chip${metric === key ? " active" : ""}`}
-                  style={{ padding: "5px 10px", fontSize: "10px" }}
-                >
-                  {METRICS[key].label.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={chartData} margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#1A1A2A" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="year" tick={{ fill: "#5A5A70", fontSize: 11 }} axisLine={{ stroke: "#1A1A2A" }} tickLine={false} />
-              <YAxis tick={{ fill: "#3A3A4A", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: "#0A0A14", border: "1px solid #262638", borderRadius: "6px", fontSize: "12px" }}
-                labelStyle={{ color: "#fff", fontWeight: "700", marginBottom: "4px" }}
-                formatter={(val, name) => [m.fmt(val), name]}
-              />
-              <Legend wrapperStyle={{ fontSize: "11px", color: "#5A5A70" }} />
-              {Object.entries(MODEL_COLORS).map(([name, color]) => (
-                <Bar key={name} dataKey={name} fill={color} maxBarSize={14} shape={<CustomBar dataKey={name} />} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Reveal>
-
-      {/* ── Per-year tiles ── */}
-      <Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(108px,1fr))", gap: "6px", marginBottom: "16px" }}>
-          {history.map((d) => {
-            const inBenchmark = benchmarkYears.includes(d.test_year)
-            const borderColor = d.test_year === 2022 ? "#E8003D" : d.test_year === 2026 ? "#3671C6" : inBenchmark ? "#FF6B00" : "var(--border-strong)"
-            return (
-              <div key={d.test_year} className="tile" style={{ borderTop: `3px solid ${borderColor}`, padding: "12px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                  <div className="num" style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>{d.test_year}</div>
-                  {d.test_year === 2022 && <div style={{ fontSize: "7px", color: "#E8003D", background: "#E8003D15", padding: "2px 4px", borderRadius: "3px" }}>RESET</div>}
-                  {d.test_year === 2026 && <div style={{ fontSize: "7px", color: "#3671C6", background: "#3671C615", padding: "2px 4px", borderRadius: "3px" }}>2 RACES</div>}
-                </div>
-                {[
-                  {label:"BASE",val:d.baseline[metric],color:"#4488FF"},
-                  {label:"XGB",val:d.xgboost[metric],color:"#E8003D"},
-                  {label:"ENS-W",val:d.ensemble_winner?.[metric],color:"#FFD700"},
-                  {label:"ENS-P",val:d.ensemble_position?.[metric],color:"#00A550"},
-                ].map((row) => (
-                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
-                    <div style={{ fontSize: "9px", color: "var(--text-faint)" }}>{row.label}</div>
-                    <div className="num" style={{ fontSize: "10px", color: row.color, fontWeight: "700" }}>{row.val == null ? "—" : m.fmt(row.val)}</div>
-                  </div>
-                ))}
-                <div className="num" style={{ marginTop: "5px", fontSize: "8px", color: "var(--text-faint)" }}>
-                  αW={d.best_alpha_winner ?? d.best_alpha ?? "-"} αP={d.best_alpha_position ?? "-"}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Reveal>
-
-      {/* ── Models + metrics reference ── */}
-      <Reveal>
-        <div className="card">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
-            <div>
-              <div className="card-label">MODELS</div>
-              {MODEL_META.map((mk) => (
-                <div key={mk.key} style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "7px" }}>
-                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: mk.color, flexShrink: 0, alignSelf: "center" }} />
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: mk.color, whiteSpace: "nowrap" }}>{mk.label}</span>
-                  <span style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.5" }}>{mk.desc}</span>
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="card-label">METRICS</div>
-              {[
-                {name:"Winner Acc",color:"#E8003D",desc:"% of races where predicted P1 actually won"},
-                {name:"Podium Acc",color:"#00A550",desc:"% of races with all 3 podium spots exactly right"},
-                {name:"Spearman",color:"#4488FF",desc:"rank correlation of full 20-driver order (1.0 = perfect)"},
-                {name:"MAE",color:"#27F4D2",desc:"average positions off per driver — lower is better"},
-                {name:"NDCG",color:"#FF6B00",desc:"rank quality weighted toward the front of the field"},
-                {name:"Within 3",color:"#AAA",desc:"% of predictions within 3 positions of reality"},
-              ].map((g) => (
-                <div key={g.name} style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "7px" }}>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: g.color, whiteSpace: "nowrap", minWidth: "84px" }}>{g.name}</span>
-                  <span style={{ fontSize: "11px", color: "var(--text-faint)", lineHeight: "1.5" }}>{g.desc}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Reveal>
-      </div>
-    </div>
-  )
-}
-
-const HOOD_SECTIONS = [
-  { id: "hood-overview", label: "Overview" },
-  { id: "hood-features", label: "Feature Set" },
-  { id: "hood-models", label: "Model Types" },
-  { id: "hood-accuracy", label: "Why Not 100%" },
-  { id: "hood-data", label: "Data Effects" },
-  { id: "hood-drift", label: "2022 Drift" },
-  { id: "hood-future", label: "Future Races" },
-]
-
-const UnderTheHoodPage = () => {
-  const [activeSection, setActiveSection] = useState(HOOD_SECTIONS[0].id)
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveSection(entry.target.id)
-        }
-      },
-      { rootMargin: "-30% 0px -60% 0px" }
-    )
-    HOOD_SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id)
-      if (el) obs.observe(el)
-    })
-    return () => obs.disconnect()
-  }, [])
-
-  const scrollToSection = (e, id) => {
-    e.preventDefault()
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
-  return (
-    <div>
-      <AnalyticsHero>
-        <div className="kicker" style={{ color: "#fff" }}>TECHNICAL DEEP DIVE</div>
-        <div className="page-title">Under The Hood</div>
-        <div className="page-sub">How the prediction engine actually works — models, features, data, and limitations</div>
-      </AnalyticsHero>
-      <div className="page">
-
-      <div className="hood-layout">
-        <div className="hood-sidebar">
-          <div className="card" style={{ padding: "16px" }}>
-            <div className="card-label" style={{ marginBottom: "10px" }}>SECTIONS</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              {HOOD_SECTIONS.map((section, index) => (
-                <a
-                  key={section.id}
-                  href={`#${section.id}`}
-                  onClick={(e) => scrollToSection(e, section.id)}
-                  className={`hood-nav-link${activeSection === section.id ? " active" : ""}`}
-                >
-                  {index + 1}. {section.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="hood-content">
-          <Reveal>
-          <section id="hood-overview" className="hood-section">
-            <h2>Overview</h2>
-            <div className="prose">
-              The predictor is trained on rolling historical F1 race data and tries to estimate the full finishing order, not just a yes-or-no winner label. That matters because the model is really solving a ranking problem: who is likely to finish ahead of whom across the whole grid.
-              <br /><br />
-              The app exposes two prediction profiles. <strong>Winner-Centric</strong> is tuned to maximize P1 hit rate. <strong>Full Finishing Order</strong> is tuned to give the strongest overall race ranking. Same race, same inputs, different optimization target.
-              <br /><br />
-              The data pipeline combines historical race results, qualifying data, qualifying gaps, constructor standings, tyre compounds, and weather context into the inputs used by the prediction models.
-            </div>
-            <h3>Tech Stack</h3>
-            <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))" }}>
-              {[
-                { name: "FastAPI", desc: "Backend API" },
-                { name: "React", desc: "Frontend UI" },
-                { name: "Pandas", desc: "Data pipeline" },
-                { name: "scikit-learn", desc: "Ridge and scaling" },
-                { name: "XGBoost", desc: "Tree ensemble" },
-                { name: "Recharts", desc: "Charts" },
-              ].map((item) => (
-                <div key={item.name} className="tile">
-                  <div className="tile-title">{item.name}</div>
-                  <div className="tile-desc">{item.desc}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-features" className="hood-section">
-            <h2>How We Chose the Feature Set</h2>
-            <div className="two-col">
-              <div className="prose">
-                We did not just throw every engineered feature into the live model and hope for the best. More features can help, but they can also create overfitting, especially when the sport changes quickly across regulation eras, circuits, tyre behavior, and team performance cycles.
-                <br /><br />
-                So the project ran feature-search experiments to compare many combinations across winner accuracy, Spearman rank correlation, MAE, and podium accuracy. That is why the app now supports two profile-specific feature sets instead of pretending one single set is best for every objective.
-              </div>
-              <div className="prose">
-                The winner profile keeps features that help identify who is most likely to win right now. The full-order profile leans more toward features that improve grid-wide ordering quality.
-                <br /><br />
-                Stable signals like grid, qualifying position, driver form, constructor strength, and team identity matter a lot because they repeatedly showed up in the strongest searches. More situational features like weather, tyres, or circuit encodings are useful too, but only when they improve the target metric without adding too much noise.
-              </div>
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-models" className="hood-section">
-            <h2>Model Types</h2>
-            <div className="two-col" style={{ gap: "12px" }}>
-              <div className="tile" style={{ padding: "22px" }}>
-                <div className="tile-title" style={{ fontSize: "16px", marginBottom: "12px" }}>Ridge Regression</div>
-                <div className="prose">
-                  Ridge draws one straight line: position = w1×grid + w2×quali_gap + w3×driver_form + ...
-                  <br /><br />
-                  <strong>Best at:</strong> stable, dominated seasons where simple pre-race strength maps well to finishing result.
-                  <br /><br />
-                  <strong>Weak at:</strong> non-linear race situations where small context changes create very different outcomes.
-                </div>
-              </div>
-              <div className="tile" style={{ padding: "22px" }}>
-                <div className="tile-title" style={{ fontSize: "16px", marginBottom: "12px" }}>XGBoost</div>
-                <div className="prose">
-                  XGBoost builds many sequential trees that learn interactions such as qualifying gap, circuit behavior, constructor form, weather, and recent reliability.
-                  <br /><br />
-                  <strong>Best at:</strong> competitive seasons where race order depends on more than one linear trend.
-                  <br /><br />
-                  <strong>Weak at:</strong> concept drift, where the historical pattern it learned no longer matches the current season.
-                </div>
-              </div>
-              <div className="tile" style={{ padding: "22px" }}>
-                <div className="tile-title" style={{ fontSize: "16px", marginBottom: "12px" }}>Winner Ensemble</div>
-                <div className="prose">
-                  final = α×Ridge + (1-α)×XGBoost, with α tuned to improve winner accuracy.
-                  <br /><br />
-                  <strong>Why it exists:</strong> sometimes the safest model is better for P1, and sometimes the aggressive one is. The blend lets us land between them.
-                  <br /><br />
-                  This is the right profile when the user mainly cares about who wins.
-                </div>
-              </div>
-              <div className="tile" style={{ padding: "22px" }}>
-                <div className="tile-title" style={{ fontSize: "16px", marginBottom: "12px" }}>Full-Order Ensemble</div>
-                <div className="prose">
-                  Same blend idea, but α is tuned for ranking quality metrics like Spearman and MAE.
-                  <br /><br />
-                  <strong>Why it exists:</strong> the best full-grid model is not always the best winner-picking model.
-                  <br /><br />
-                  This is the right profile when the user cares about the whole classification, not only P1.
-                </div>
-              </div>
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-accuracy" className="hood-section">
-            <h2>Why the Model Is Not 100% Right</h2>
-            <div className="two-col">
-              <div className="prose">
-                F1 is not a closed system. Even with strong pre-race features, the model does not know every in-race event that will decide the result: safety cars, VSC timing, bad pit stops, tyre degradation surprises, rain arriving early or late, first-lap contact, mechanical failures, red flags, strategy gambles, and driver mistakes.
-                <br /><br />
-                That means there is a hard ceiling on accuracy. A model can be very useful without being anywhere close to 100%, because the sport itself is noisy and often chaotic.
-              </div>
-              <div className="prose">
-                Even 80% winner accuracy is unrealistic in a tightly matched era. In dominant seasons, one driver or team can make the race easy to predict. In competitive seasons, several front-runners can all plausibly win on merit, strategy, or circumstance.
-                <br /><br />
-                So when winner accuracy drops while Spearman stays strong, that usually means the model still understands the competitive order fairly well, but the difference between P1, P2, and P3 is too small and too unstable to call perfectly every weekend.
-              </div>
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-data" className="hood-section">
-            <h2>How Data Shapes the Results</h2>
-            <div className="two-col">
-              <div className="prose">
-                More data helps, but only if it is relevant. Expanding the historical window gave the models more regulation cycles, circuit types, and driver/team combinations to learn from. That improved robustness compared with a shorter training span.
-                <br /><br />
-                Feature quality beats model complexity. Real qualifying gaps, constructor standings, tyre compounds, and race weather add signal the older version did not use. Better inputs often matter more than adding another fancy model layer.
-              </div>
-              <div className="prose">
-                Rolling training prevents leakage. Each evaluation year only trains on seasons that happened before it. That keeps the benchmark honest and closer to real deployment.
-                <br /><br />
-                Competitive eras reduce winner accuracy naturally. When four teams can realistically win, there is simply less predictable separation at the top than in a one-team-dominant season.
-              </div>
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-drift" className="hood-section">
-            <h2>2022 Concept Drift</h2>
-            <div className="prose">
-              2022 introduced completely new ground-effect regulations, which changed the pecking order fast. Historical team-strength assumptions that looked safe through 2021 stopped being safe almost overnight.
-              <br /><br />
-              That is why XGBoost can struggle more than Ridge in drift-heavy years. A flexible model learns richer patterns, but it also has more ways to learn patterns that later expire. The ensemble recovered by leaning much harder on Ridge once the aggressive tree model became less trustworthy.
-              <br /><br />
-              This is a reminder that model quality is not just about fitting the past. It is also about surviving when the sport changes.
-            </div>
-          </section>
-          </Reveal>
-
-          <Reveal>
-          <section id="hood-future" className="hood-section">
-            <h2>Future Race Prediction</h2>
-            <div className="prose">
-              For upcoming races with no qualifying session yet, the app has to make several equal-assumption inputs: similar grid, neutral tyre choice, and dry conditions. That means future-race predictions lean more on longer-term competitive signals like form, constructor strength, reliability, and circuit history.
-              <br /><br />
-              Recent 2026 races get extra weight so the model does not over-anchor on old eras. That nudges the output toward the current competitive order while still preserving enough historical data to avoid learning from a tiny sample.
-              <br /><br />
-              Limitation: before qualifying, two teammates with similar form can still look very close. Once real qualifying gaps arrive, prediction quality should improve because the model finally gets the strongest same-weekend pace signal.
-            </div>
-          </section>
-          </Reveal>
-        </div>
-      </div>
-      </div>
-    </div>
-  )
-}
-
-
 const IMG_URL = `${process.env.PUBLIC_URL}/f1-car.png`
 const HERO_IMG_URL = `${process.env.PUBLIC_URL}/hero-image.jpg`
 
 const F1_CDN = "https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_1320/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9"
 
-// Static circuit data keyed by our circuit slug
+/* Static circuit facts keyed by circuit slug — laps, lengths, location, track
+   map. Use these freely.
+
+   Do NOT read `round` or `race_date` from here. The calendar lives in
+   F1_2026_CIRCUITS on the API, and these drifted out of sync with it: this
+   table omits Bahrain and Jeddah as 2026 rounds, so everything after them was
+   numbered two low (Monza 13 here vs 15 on the API). The dates contradict
+   themselves too — round 13 is listed after round 14 — and because the key is
+   the circuit alone, a 2026 date was shown for historical races at the same
+   venue. Round and year now come from the selected race object instead. */
 const CIRCUIT_DATA = {
   albert_park:   { name:"Australian Grand Prix", circuit:"Albert Park Grand Prix Circuit", round:1, race_date:"2026-03-08", city:"Melbourne", country:"Australia", laps:58, circuit_length_miles:3.28, circuit_length_km:5.278, race_length_miles:190.216, race_length_km:306.124, track:"https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_771/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Australia_Circuit" },
   shanghai:      { name:"Chinese Grand Prix", circuit:"Shanghai International Circuit", round:2, race_date:"2026-03-15", city:"Shanghai", country:"China", laps:56, circuit_length_miles:3.387, circuit_length_km:5.451, race_length_miles:189.559, race_length_km:305.066, track:`${F1_CDN}/China_Circuit` },
@@ -927,9 +321,9 @@ const CIRCUIT_DATA = {
 
 const GridCell = ({ driver, flip }) => {
   const tc = TEAM_COLORS[driver.team] || "#888"
-  const border = flip ? { borderLeft: "none", borderRight: `3px solid ${tc}` } : { borderLeft: `3px solid ${tc}` }
   return (
-    <div className="sim-grid-driver" style={border}>
+    <div className={`sim-grid-driver${flip ? " flip" : ""}`}>
+      <span className="sim-grid-chip" style={{ background: tc }} aria-hidden="true" />
       <span className="num sim-grid-pos">P{driver.grid}</span>
       <div>
         <div className="sim-grid-name">{surname(driver.driver)}</div>
@@ -1019,23 +413,29 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
                 {raceOptions.map((r) => <option key={r.key} value={r.key}>{r.name}{r.is_future ? " ◆ Future" : ""}</option>)}
               </select>
             </div>
-            <button onClick={predict} disabled={loading || !selectedRaceKey} className="hero-cta">
+            <button onClick={() => predict()} disabled={loading || !selectedRaceKey} className="hero-cta">
               ▶ PREDICT RACE
             </button>
           </div>
           {error && <div className="hero-error">{error}</div>}
+          {/* Live per-profile scores. These were four hardcoded strings, which
+              is why switching profile appeared to change nothing but the model
+              name — the whole point of the two profiles is that these numbers
+              trade off against each other. */}
           <div className="hero-stat-chips">
-            {[
-              {label:"2016 WINNER ACC",val:"66.7%"},
-              {label:"2023 WINNER ACC",val:"86.4%"},
-              {label:"2024 SPEARMAN",val:"0.763"},
-              {label:"2024 MAE",val:"2.90p"},
-            ].map((s) => (
-              <div key={s.label} className="hero-stat-chip">
-                <div className="chip-label">{s.label}</div>
-                <div className="chip-value num">{s.val}</div>
-              </div>
-            ))}
+            {HERO_CHIP_METRICS.map((m) => {
+              const value = modelStats?.all_metrics?.[m.key]
+              const isObjective = modelStats?.objective_metric === m.key
+              return (
+                <div key={m.key} className={`hero-stat-chip${isObjective ? " is-objective" : ""}`}>
+                  <div className="chip-label">
+                    {m.label}
+                    {isObjective && <span className="chip-flag">OPTIMISED</span>}
+                  </div>
+                  <div className="chip-value num">{value == null ? "—" : m.fmt(value)}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -1053,7 +453,11 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
               {smData && (
                 <div className="hero-circuit-details">
                   <div className="hero-circuit-popup-row"><span>Circuit</span><span>{smData.circuit}</span></div>
-                  <div className="hero-circuit-popup-row"><span>Round {smData.round}</span><span>{new Date(smData.race_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></div>
+                  {/* Round and year come from the selected race, which the API
+                      supplies. CIRCUIT_DATA is keyed by circuit alone, so its
+                      round/date describe one 2026 entry and were wrong for both
+                      the current calendar and every historical season. */}
+                  <div className="hero-circuit-popup-row"><span>Round {selectedRace?.round}</span><span>{selectedRace?.year}</span></div>
                   <div className="hero-circuit-popup-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
                   <div className="hero-circuit-popup-row"><span>Laps</span><span>{smData.laps}</span></div>
                   <div className="hero-circuit-popup-row"><span>Circuit Length</span><span>{smData.circuit_length_miles} mi / {smData.circuit_length_km} km</span></div>
@@ -1095,6 +499,10 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
 export default function App() {
   const [page, setPage] = useState("predict")
   const [selectedProfile, setSelectedProfile] = useState("winner")
+  /* Refs, not state: the profile effect needs the *current* predict closure
+     without re-subscribing every render. */
+  const predictRef = useRef(null)
+  const hasPredictedRef = useRef(false)
   const [races, setRaces] = useState([])
   const [years, setYears] = useState([])
   const [raceOptions, setRaceOptions] = useState([])
@@ -1175,6 +583,7 @@ export default function App() {
     const rs = races.filter((r) => r.year === selectedYear).sort((a, b) => a.round - b.round)
     setRaceOptions(rs)
     setSelectedRaceKey(rs[0]?.key || "")
+    hasPredictedRef.current = false
     setResults(null)
     setAccuracy(null)
     setRaceInfo(null)
@@ -1182,13 +591,21 @@ export default function App() {
     setFutureNote("")
   }, [selectedYear, races])
 
+  /* The two profiles select different features and a different blend, so the
+     finishing order genuinely differs. Re-run in place rather than dumping the
+     user back to the selector — switching profile is exactly the moment you
+     want to see the numbers move. */
   useEffect(() => {
+    setError("")
+    if (hasPredictedRef.current && predictRef.current) {
+      predictRef.current({ quiet: true })
+      return
+    }
     setResults(null)
     setAccuracy(null)
     setRaceInfo(null)
     setIsFuture(false)
     setFutureNote("")
-    setError("")
   }, [selectedProfile])
 
   // Keep the hero's track map + starting grid in sync with the selection,
@@ -1207,12 +624,15 @@ export default function App() {
     return () => { active = false }
   }, [selectedRaceKey, raceOptions, selectedYear, selectedProfile])
 
-  const predict = async () => {
+  const predict = async ({ quiet = false } = {}) => {
     const selectedRace = raceOptions.find((r) => r.key === selectedRaceKey)
     if (!selectedRace) return
 
-    const minLoadingMs = LOADER_LAP_MS
+    /* A profile switch re-runs an existing prediction, and forcing the full
+       loader lap for that would feel like a stall rather than a refinement. */
+    const minLoadingMs = quiet ? 0 : MIN_LOADER_MS
     const startedAt = Date.now()
+    hasPredictedRef.current = true
 
     setError("")
     setLoading(true)
@@ -1241,10 +661,17 @@ export default function App() {
     }
   }
 
+  predictRef.current = predict
+
   return (
     <div style={{ minHeight: "100vh" }}>
       <ScrollProgress />
       <BackToTop />
+
+      <ScrollIntro />
+
+      {/* Slides up over the pinned intro, which stays fixed behind it. */}
+      <div className="app-body">
 
       <div className="topbar">
         <div className="brand">
@@ -1282,7 +709,7 @@ export default function App() {
         {visited.analytics && <AnalyticsPage analytics={analytics} modelStats={modelStats} selectedProfile={selectedProfile} />}
       </div>
       <div style={{ display: page === "hood" ? "block" : "none" }}>
-        {visited.hood && <UnderTheHoodPage />}
+        {visited.hood && <UnderTheHoodPage analytics={analytics} />}
       </div>
 
       <div style={{ display: page === "predict" ? "block" : "none" }}>
@@ -1380,27 +807,19 @@ export default function App() {
 
               <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "28px", alignItems: "start" }}>
                 <div>
-                  <Podium results={results} />
+                  <Podium results={results} teamColors={TEAM_COLORS} />
                   <div className="card" style={{ padding: "16px" }}>
                     <div className="card-label" style={{ marginBottom: "10px" }}>{isFuture ? "PREDICTION METHOD" : "ACTUAL POSITION KEY"}</div>
                     {isFuture ? (
                       <div style={{ fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.8" }}>
                         {raceInfo?.profileLabel || modelStats?.profile_label}<br />
-                        2026 weighted 10x, 2025 weighted 3x<br />
+                        Trained on every round before this one<br />
                         Equal grid, medium tyre, dry track assumed<br />
                         No actual results available yet
                       </div>
-                    ) : [
-                      {color:"#00A550",label:"Exact match"},
-                      {color:"#4488FF",label:"Within 2 positions"},
-                      {color:"#FF6B00",label:"Within 4 positions"},
-                      {color:"#E8003D",label:"Missed by 5+"},
-                    ].map((k) => (
-                      <div key={k.label} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                        <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: `${k.color}22`, border: `1px solid ${k.color}` }} />
-                        <div style={{ fontSize: "11px", color: "var(--text-faint)" }}>{k.label}</div>
-                      </div>
-                    ))}
+                    ) : (
+                      <AccuracyKey />
+                    )}
                   </div>
                 </div>
                 <div>
@@ -1410,7 +829,7 @@ export default function App() {
                     <div style={{ textAlign: "center" }}>GRID</div>
                     <div style={{ textAlign: "center" }}>{showActual && !isFuture ? "ACTUAL" : "—"}</div>
                   </div>
-                  {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} />)}
+                  {results.map((r, i) => <GridRow key={r.driver} r={r} i={i} showActual={showActual && !isFuture} teamColors={TEAM_COLORS} />)}
                 </div>
               </div>
             </div>
@@ -1420,8 +839,18 @@ export default function App() {
 
       <div className="footer">
         <span>F1 STRATEGY LAB — 2015–2026</span>
-        <span>4 MODELS · WINNER + FULL ORDER PROFILES · TYRE + WEATHER FEATURES</span>
-        <span>2024 SPEARMAN 0.763 · 2023 WINNER 86.4%</span>
+        <span>RIDGE + XGBOOST + BLEND · WINNER &amp; FULL ORDER PROFILES</span>
+        {/* Was "2024 SPEARMAN 0.763 · 2023 WINNER 86.4%", hardcoded. 86.4% did
+            not correspond to anything the app computed — the current data has
+            2023 Ridge at 81.8%. Read the live profile instead so it cannot
+            drift again. */}
+        <span>
+          {modelStats?.all_metrics
+            ? `${modelStats.selected_method?.toUpperCase()} · SPEARMAN ${Number(modelStats.all_metrics.spearman).toFixed(3)} · WINNER ${Number(modelStats.all_metrics.winner_acc).toFixed(1)}%`
+            : "LOADING MODEL STATS"}
+        </span>
+      </div>
+
       </div>
     </div>
   )

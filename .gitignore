@@ -1,3 +1,9 @@
+# Environment files. .env.example is the tracked template; everything else is
+# local and may hold credentials (ALLOWED_ORIGINS, RENDER_API_URL, keys).
+.env
+.env.*
+!.env.example
+
 # Python virtual environments
 venv/
 
@@ -13,6 +19,9 @@ __pycache__/
 
 # Editor workspace files
 *.code-workspace
+
+# Local agent/editor tooling config
+.claude/
 
 # Frontend build artifacts
 frontend/node_modules/

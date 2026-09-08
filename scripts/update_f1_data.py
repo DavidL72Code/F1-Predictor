@@ -12,6 +12,9 @@ import requests
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1"
+# Jolpica caps a page at 100. Ergast allowed 1000, and carrying that number
+# over is what silently truncated every multi-page fetch. See fetch_all.
+PAGE_SIZE = 100
 
 
 def slug(value):
@@ -64,17 +67,30 @@ def fetch_json(url):
 
 
 def fetch_all(path):
-    url = f"{JOLPICA_BASE}/{path}.json?limit=1000"
-    data = fetch_json(url)
-    total = int(data.get("total", 0))
+    """Page through a Jolpica collection.
+
+    This asked for limit=1000 and then advanced the offset by 1000. Ergast
+    allowed 1000, but Jolpica caps a page at 100 — so the first request came
+    back with 100 rows while the loop assumed it had taken 1000, and any
+    collection larger than one page was silently truncated after the first.
+    For 2026 that meant 100 result rows (5 races) out of 286 available, and the
+    model quietly trained on a season that stopped in May.
+
+    Advance by the limit the server actually applied, not the one requested.
+    """
     rows = []
     offset = 0
+    total = None
     while True:
-        page_url = f"{JOLPICA_BASE}/{path}.json?limit=1000&offset={offset}"
-        page = fetch_json(page_url)
+        page = fetch_json(f"{JOLPICA_BASE}/{path}.json?limit={PAGE_SIZE}&offset={offset}")
         rows.append(page)
-        offset += 1000
-        if offset >= total or total == 0:
+
+        if total is None:
+            total = int(page.get("total", 0))
+        applied = int(page.get("limit", PAGE_SIZE) or PAGE_SIZE)
+        offset += applied
+
+        if total == 0 or offset >= total or applied == 0:
             break
     return rows
 

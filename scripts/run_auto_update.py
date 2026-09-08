@@ -54,6 +54,13 @@ def main():
         ]
     )
 
+    # Re-tune the blend and, more importantly, re-decide which method goes live
+    # for each profile. A new result can flip that: Winner-Centric always ships
+    # whichever model currently has the best winner accuracy, and Full Finishing
+    # Order whichever has the lowest MAE. Both are read from this file at
+    # request time, so rewriting it is what makes the choice take effect.
+    run([sys.executable, "scripts/tune_alpha.py"])
+
     env_file = os.environ.get("GITHUB_ENV")
     if env_file:
         with open(env_file, "a") as f:

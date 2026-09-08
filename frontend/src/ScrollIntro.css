@@ -1,0 +1,486 @@
+/* ════════════════════════════════════════════════════════
+   PINNED SCROLL INTRO — scene 1 → scene 2
+   The stage is sticky and fills the viewport, so nothing on
+   screen moves as you scroll; scroll only advances the scene vars below.
+   ════════════════════════════════════════════════════════ */
+
+.si-wrap {
+  position: relative;
+  /* Height is set inline (INTRO_VH) — it is the scroll runway, not a layout box. */
+  background: var(--bg);
+}
+
+.si-stage {
+  --e1: 0; /* scene 1 departs  0 → 1 */
+  --n2: 0; /* scene 2 arrives  0 → 1 */
+  --e2: 0; /* scene 2 departs  0 → 1 */
+  --n3: 0; /* scene 3 arrives  0 → 1 */
+  --cam: 0; /* camera push      0 → 1 */
+  --rush: 0; /* hand-over heat   0 → 1 → 0 */
+
+  /* Fixed, not sticky. A sticky stage scrolls away over a final viewport
+     height once it unpins, which left the scroll hint drifting up the screen
+     and delayed the header. Fixed means the stage never moves and the app
+     below simply rises over it. */
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100svh;
+  z-index: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+/* ── track plate ── */
+
+.si-track {
+  position: absolute;
+  inset: -6%;
+  background-position: 50% 62%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* Push down the straight as the scene advances: the horizon stays put and
+     the finish line runs off the bottom, which reads as accelerating away. */
+  transform: scale(calc(1.04 + var(--cam) * 0.3)) translate3d(0, calc(var(--cam) * 7vh), 0);
+  transform-origin: 50% 38%;
+  filter: brightness(calc(0.62 - var(--cam) * 0.16)) contrast(1.12) saturate(0.72);
+  will-change: transform, filter;
+}
+
+/* Vignette + top/bottom falloff so the headline always has something to sit on
+   and the plate blends into the app's near-black background. */
+.si-grade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 78% at 50% 46%, transparent 24%, rgba(3, 3, 10, 0.66) 78%, rgba(3, 3, 10, 0.9) 100%),
+    linear-gradient(to bottom, rgba(3, 3, 10, 0.86) 0%, rgba(3, 3, 10, 0.24) 26%, rgba(3, 3, 10, 0.3) 62%, var(--bg) 99%);
+  opacity: calc(0.9 + var(--rush) * 0.1);
+}
+
+/* ── 3D car ──
+   Sits above .si-grade so the vignette darkens the track but not the car,
+   and below .si-copy so the headline always reads over the bodywork. */
+
+.si-car {
+  position: absolute;
+  inset: 0;
+  /* Above .si-copy (2), so scattering letters pass BEHIND the bodywork. That
+     occlusion is what makes the car read as an object standing in the scene
+     rather than a picture behind the type. */
+  z-index: 3;
+  pointer-events: none;
+  /* Every headline now sits at the top, so the car stays low in frame for all
+     three scenes and only drifts up a little as the camera settles. The old
+     large lift was there to clear a bottom-aligned headline that no longer
+     exists, and it left the last scene floating over empty track. */
+  transform: translateY(calc(9% - var(--cam) * 4%));
+  /* No CSS drop-shadow here on purpose: a filter over a full-viewport canvas
+     re-rasterises every animated frame, and its offset shadow landed straight
+     on the scene 2 headline and greyed it out. The contact shadow rendered
+     inside the scene grounds the car for free. */
+}
+
+.si-car canvas {
+  /* Fades up once WebGL has something worth showing. */
+  animation: si-car-in 900ms ease 120ms both;
+}
+
+@keyframes si-car-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Shown only until the model is parsed. Without it the first scene looks
+   like the car is simply missing while 800 kB downloads. */
+.si-car-loading {
+  position: absolute;
+  top: 62%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  color: var(--text-faint);
+  animation: si-car-wait 1.5s ease-in-out infinite;
+}
+
+@keyframes si-car-wait {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.7; }
+}
+
+/* ── scene 3 callouts ── */
+
+.si-callouts {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.si-callout {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Each pill trails the one before it, so they arrive as a sequence rather
+     than a block. Matches the per-letter stagger on the headline. */
+  --cp: clamp(0, calc((var(--n3) - 0.5 - var(--d)) / 0.3), 1);
+  opacity: var(--cp);
+}
+
+.si-callout-label {
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(12, 12, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: clamp(10px, 1.05vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.si-callout-tag {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 11px;
+  background: #0a0a12;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+/* Icons face inward toward the car, so the left column reverses. */
+.si-callout-tl,
+.si-callout-bl {
+  left: clamp(14px, 3.4vw, 72px);
+}
+
+.si-callout-tr,
+.si-callout-br {
+  right: clamp(14px, 3.4vw, 72px);
+  flex-direction: row-reverse;
+}
+
+/* The car spans most of the width at side profile, so the pairs sit above and
+   below its mass rather than trying to squeeze in beside it. */
+.si-callout-tl,
+.si-callout-tr {
+  top: 30%;
+}
+
+.si-callout-bl,
+.si-callout-br {
+  top: 64%;
+}
+
+.si-callout-tl { transform: translateX(calc((1 - var(--cp)) * -34px)); }
+.si-callout-bl { transform: translateX(calc((1 - var(--cp)) * -34px)); }
+.si-callout-tr { transform: translateX(calc((1 - var(--cp)) * 34px)); }
+.si-callout-br { transform: translateX(calc((1 - var(--cp)) * 34px)); }
+
+/* ── speed streaks, only visible mid-transition ── */
+
+.si-streaks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: calc(var(--rush) * var(--rush) * 0.34);
+  pointer-events: none;
+}
+
+/* Driven by --cam, not --rush: --rush rises and falls, which would make the
+   streaks sweep down and then reverse back up mid-transition. --cam only ever
+   increases, so they always travel one way, like road rushing past. */
+.si-streaks span {
+  position: absolute;
+  left: var(--x);
+  top: -45%;
+  width: 1px;
+  height: 45%;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: translate3d(0, calc(var(--cam) * 420%), 0) scaleY(calc(0.5 + var(--rush) * 1.6));
+  opacity: var(--o);
+}
+
+/* ── headlines ── */
+
+.si-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Every headline sits at the top, in the same place. The car owns the middle
+   and the callouts hang either side of it, so nothing important ever lands in
+   the bottom of the frame where it is easiest to scroll straight past. */
+.si-scene {
+  position: absolute;
+  top: clamp(36px, 6vh, 84px);
+  left: 50%;
+  width: min(1180px, 92vw);
+  padding: 0 clamp(12px, 4vw, 40px);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+/* The animated copy is aria-hidden; this carries the real text for AT. */
+.si-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.si-kicker {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 1.1vw, 12px);
+  letter-spacing: 0.42em;
+  color: var(--accent);
+  margin-bottom: clamp(10px, 1.8vh, 22px);
+  /* Leaves ahead of the letters so it does not linger under the scatter. */
+  opacity: calc(1 - var(--e1) * 1.8);
+  transform: translate3d(0, calc(var(--e1) * -70px), 0);
+}
+
+.si-headline {
+  margin: 0;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 11.2vw, 9.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.035em;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 6px 44px rgba(0, 0, 0, 0.72);
+}
+
+/* Scene 2's line is much longer than the others, so it needs a smaller
+   setting to stay on two lines at the same measure. */
+.si-headline-sm {
+  font-size: clamp(1.85rem, 7.4vw, 6.3rem);
+  letter-spacing: -0.028em;
+  line-height: 0.92;
+}
+
+.si-line {
+  display: block;
+}
+
+.si-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* The space between words has to be an explicit gap: the per-character spans
+   collapse the original whitespace. */
+.si-word + .si-word {
+  margin-left: 0.26em;
+}
+
+.si-ch {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* One rule for every scene. --pin / --pout are set per scene, so a middle
+   scene can arrive, hold, and leave with no special case: the arrival offset
+   decays to zero as it lands, then the departure offset takes over.
+   --dly staggers the start; the 0.52 span is chosen so the last letter still
+   finishes exactly at progress 1. */
+.si-ch {
+  --li: clamp(0, calc((var(--pin) - var(--dly)) / 0.52), 1);
+  --lo: clamp(0, calc((var(--pout) - var(--dly)) / 0.52), 1);
+  --ii: calc(1 - var(--li));
+  transform:
+    translate3d(
+      calc(var(--dxi) * var(--ii) + var(--dxo) * var(--lo)),
+      /* squared → accelerates rather than drifting linearly */
+      calc(var(--dyi) * var(--ii) * var(--ii) + var(--dyo) * var(--lo) * var(--lo)),
+      0
+    )
+    rotate(calc(var(--roti) * var(--ii) + var(--roto) * var(--lo)))
+    scale(calc(1 - 0.3 * var(--ii) - 0.42 * var(--lo)));
+  /* Whichever of the two is dimmer wins, so a letter is never briefly opaque
+     while it is meant to be mid-flight in either direction. */
+  opacity: min(
+    clamp(0, calc(var(--li) * 1.65), 1),
+    clamp(0, calc(1 - var(--lo) * 1.15), 1)
+  );
+  filter: blur(calc((var(--ii) * var(--ii) + var(--lo) * var(--lo)) * 7px));
+}
+
+.si-sub {
+  margin-top: clamp(14px, 2.6vh, 30px);
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 1.25vw, 13px);
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  /* Trails the headline so it does not arrive before the letters land. */
+  opacity: clamp(0, calc((var(--pin) - 0.72) / 0.28), 1);
+  transform: translate3d(0, calc((1 - var(--pin)) * 30px), 0);
+}
+
+/* ── scroll affordance ── */
+
+.si-hint {
+  position: absolute;
+  z-index: 5;
+  bottom: clamp(18px, 4vh, 42px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transform: translateX(-50%);
+  /* Visible while scene 1 holds, out of the way through the transition, then
+     back at the end so the intro does not dead-end. */
+  opacity: max(
+    clamp(0, calc(1 - var(--e1) * 2.4), 1),
+    clamp(0, calc((var(--n3) - 0.85) / 0.15), 1)
+  );
+}
+
+/* Both labels share one grid cell so the swap does not shift the rail. */
+.si-hint-labels {
+  display: grid;
+  place-items: center;
+}
+
+.si-hint-labels > span {
+  grid-area: 1 / 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  color: var(--text-faint);
+}
+
+.si-hint-scroll {
+  opacity: clamp(0, calc(1 - var(--e1) * 2.4), 1);
+}
+
+.si-hint-enter {
+  color: var(--accent);
+  opacity: clamp(0, calc((var(--n3) - 0.85) / 0.15), 1);
+}
+
+.si-hint-rail {
+  position: relative;
+  width: 1px;
+  height: 40px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.si-hint-rail i {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  animation: si-rail 1.9s ease-in-out infinite;
+}
+
+@keyframes si-rail {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.si-hint:hover .si-hint-scroll {
+  color: var(--text);
+}
+
+.si-hint:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ── narrow screens ── */
+
+/* Blur re-rasterises every letter each frame. Transform + opacity alone stay
+   on the compositor, so drop the blur where the GPU budget is tightest. */
+@media (max-width: 900px) {
+  .si-ch {
+    filter: none;
+  }
+}
+
+@media (max-width: 860px) {
+  /* A full-height canvas on a portrait phone is a ~1:2 frame, so a car framed
+     to fill the width leaves most of the viewport empty above and below it.
+     Giving the car its own band brings the canvas back near square. */
+  .si-car {
+    top: 24%;
+    bottom: 26%;
+    inset-inline: 0;
+  }
+
+  /* No room for pills either side of the car — stack them under the
+     headline as a compact column instead of overlapping the bodywork. */
+  .si-callouts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 16px 21vh;
+  }
+
+  .si-callout {
+    position: static;
+    transform: none;
+    flex-direction: row;
+  }
+
+  .si-callout-label { font-size: 11px; padding: 7px 13px; }
+  .si-callout-tag { width: 32px; height: 32px; border-radius: 9px; font-size: 8px; }
+}
+
+@media (max-width: 640px) {
+  .si-headline { font-size: clamp(2rem, 13vw, 3.6rem); }
+  .si-headline-sm { font-size: clamp(1.5rem, 8.6vw, 2.6rem); }
+  .si-track { background-position: 50% 58%; }
+}
+
+/* ── reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the scroll-driven swap (it is the only way to reach scene 2) but drop
+     the scatter, tumble and blur down to a straight cross-fade. */
+  .si-ch {
+    transform: none;
+    filter: none;
+  }
+
+  .si-track {
+    transform: scale(1.04);
+  }
+
+  .si-streaks {
+    display: none;
+  }
+
+  .si-hint-rail i {
+    animation: none;
+  }
+}

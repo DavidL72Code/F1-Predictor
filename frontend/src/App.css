@@ -64,16 +64,39 @@ body {
   background: var(--accent-dim);
 }
 
+/* Everything below the intro. Opaque and stacked above the fixed intro stage
+   so it slides up and covers it, instead of the intro scrolling away. */
+.app-body {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  /* Must be at least a viewport tall or it cannot scroll far enough to reach
+     the top of the screen — the page just clamps with the header part way
+     down and the intro still showing underneath. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Keeps the footer at the bottom when the page content is short. */
+.app-body > .footer {
+  margin-top: auto;
+}
+
 /* ── scroll progress bar ── */
 .scroll-progress {
   position: fixed;
   top: 0;
   left: 0;
   height: 2px;
+  width: 100%;
   background: linear-gradient(90deg, var(--accent), #ff4d79);
   z-index: 500;
-  transition: width 0.1s linear;
-  will-change: width;
+  /* scaleX rather than width: width animates on the layout path every
+     scroll frame, transform stays on the compositor. */
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -475,22 +498,22 @@ body {
    HERO STAGE (Zooming car effect)
    ════════════════════════════════════════════════ */
 
+/* Sized by its content rather than the viewport. It used to be a full
+   viewport-height block with the controls pinned to the bottom, which left a
+   tall empty band of hero image between the header and the first card. */
 .stage {
   position: relative;
   width: 100%;
-  height: calc(100vh - 60px);
-  min-height: 540px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f0ecec;
+  padding: 26px 0 34px;
+  background: var(--bg);
   overflow: hidden;
 }
 
+/* The hero image and its overlays are a backdrop behind the controls now, so
+   the frame fills the stage instead of dictating its height. */
 .frame {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
 }
 
@@ -509,7 +532,11 @@ body {
   width: 100%;
   height: 130%;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: center 45%;
+  /* The artwork is near-white. Behind dark cards on a near-black page it read
+     as a blown-out panel rather than a backdrop, so it is knocked well down —
+     the car and blossom still show as texture, but the page stays dark. */
+  filter: brightness(0.26) contrast(1.15) saturate(0.85);
 }
 
 .ghost {
@@ -577,10 +604,8 @@ body {
 
 /* hero layout: selector full-width on top, map + grid as two columns below */
 .hero-overlay-layout {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  margin: 0 auto;
   z-index: 20;
   width: calc(100% - 56px);
   max-width: 1100px;
@@ -762,7 +787,6 @@ body {
   padding: 12px 16px;
   background: rgba(20, 9, 13, 0.85);
   border: 1px solid var(--accent-dim);
-  border-left: 3px solid var(--accent);
   border-radius: 6px;
   font-size: 12px;
   color: #f6c3d0;
@@ -880,14 +904,12 @@ body {
 .notice.error {
   background: #14090d;
   border: 1px solid var(--accent-dim);
-  border-left: 3px solid var(--accent);
   color: #f6c3d0;
 }
 
 .notice.future {
   background: #0a0a1a;
   border: 1px solid rgba(54, 113, 198, 0.3);
-  border-left: 3px solid #3671c6;
   color: var(--text-muted);
 }
 
@@ -1149,68 +1171,6 @@ body {
    UNDER THE HOOD
    ════════════════════════════════════════════════ */
 
-.hood-layout {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-
-.hood-sidebar {
-  position: sticky;
-  top: 80px;
-}
-
-.hood-content {
-  min-width: 0;
-}
-
-.hood-nav-link {
-  display: block;
-  padding: 9px 12px;
-  border-left: 2px solid transparent;
-  color: var(--text-faint);
-  text-decoration: none;
-  font-size: 12px;
-  border-radius: 0 4px 4px 0;
-  transition: all 0.2s ease;
-}
-
-.hood-nav-link:hover {
-  color: var(--text-muted);
-  background: var(--surface-2);
-}
-
-.hood-nav-link.active {
-  color: #fff;
-  border-left-color: var(--accent);
-  background: var(--surface-2);
-}
-
-.hood-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 32px;
-  margin-bottom: 16px;
-  scroll-margin-top: 80px;
-}
-
-.hood-section h2 {
-  margin: 0 0 18px;
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  color: #fff;
-}
-
-.hood-section h3 {
-  margin: 24px 0 14px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-}
-
 .prose {
   font-size: 14px;
   color: var(--text-muted);
@@ -1298,4 +1258,30 @@ body {
   8%   { opacity: 1; }
   92%  { opacity: 0.7; }
   100% { transform: translateY(100vh) translateX(var(--drift)) rotate(var(--spin)); opacity: 0; }
+}
+
+/* Team identity as a small mark rather than a thick coloured card edge. */
+.sim-grid-chip {
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.sim-grid-driver.flip { flex-direction: row-reverse; }
+
+/* The metric this profile is tuned for, called out among the chips. */
+.hero-stat-chip.is-objective {
+  border-color: var(--accent-dim);
+}
+
+.hero-stat-chip .chip-flag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(232, 0, 61, 0.14);
+  color: var(--accent);
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
 }
