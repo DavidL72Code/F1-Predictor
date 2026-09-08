@@ -148,6 +148,7 @@ CIRCUIT_TYPES = {
     "albert_park": 0,
     "villeneuve": 0,
     "ifema_madrid": 0,
+    "madring": 0,
     "monza": 1,
     "spa": 1,
     "silverstone": 1,
@@ -165,6 +166,7 @@ CIRCUIT_TYPES = {
     "losail": 2,
     "imola": 2,
     "miami": 2,
+    "sepang": 2,
 }
 
 F1_2026_DRIVERS = [
@@ -192,31 +194,40 @@ F1_2026_DRIVERS = [
     {"driver": "valtteri_bottas", "team": "cadillac"},
 ]
 
+# The 2026 calendar, as reported by Jolpica (GET /ergast/f1/2026).
+#
+# The previous list was hand-written and wrong: it had 24 rounds including a
+# Bahrain and a Jeddah round that are not on the 2026 calendar at all, which
+# pushed every later round two places out — Monza sat at 15 when it is actually
+# round 13. It also missed Sepang entirely and used "ifema_madrid" where the
+# feed says "madring". Round numbers here key the whole app, so a race that had
+# already run could be offered as a future prediction.
+#
+# The dead "completed" flag is gone; /races derives that from the results data.
 F1_2026_CIRCUITS = [
-    {"round": 1, "circuit": "albert_park", "name": "Australian GP", "completed": True},
-    {"round": 2, "circuit": "shanghai", "name": "Chinese GP (Sprint)", "completed": False},
-    {"round": 3, "circuit": "suzuka", "name": "Japanese GP", "completed": False},
-    {"round": 4, "circuit": "bahrain", "name": "Bahrain GP", "completed": False},
-    {"round": 5, "circuit": "jeddah", "name": "Saudi Arabian GP", "completed": False},
-    {"round": 6, "circuit": "miami", "name": "Miami GP (Sprint)", "completed": False},
-    {"round": 7, "circuit": "villeneuve", "name": "Canadian GP (Sprint)", "completed": False},
-    {"round": 8, "circuit": "monaco", "name": "Monaco GP", "completed": False},
-    {"round": 9, "circuit": "catalunya", "name": "Barcelona GP", "completed": False},
-    {"round": 10, "circuit": "red_bull_ring", "name": "Austrian GP", "completed": False},
-    {"round": 11, "circuit": "silverstone", "name": "British GP (Sprint)", "completed": False},
-    {"round": 12, "circuit": "spa", "name": "Belgian GP", "completed": False},
-    {"round": 13, "circuit": "hungaroring", "name": "Hungarian GP", "completed": False},
-    {"round": 14, "circuit": "zandvoort", "name": "Dutch GP (Sprint)", "completed": False},
-    {"round": 15, "circuit": "monza", "name": "Italian GP", "completed": False},
-    {"round": 16, "circuit": "ifema_madrid", "name": "Spanish GP", "completed": False},
-    {"round": 17, "circuit": "baku", "name": "Azerbaijan GP", "completed": False},
-    {"round": 18, "circuit": "marina_bay", "name": "Singapore GP (Sprint)", "completed": False},
-    {"round": 19, "circuit": "americas", "name": "US GP", "completed": False},
-    {"round": 20, "circuit": "rodriguez", "name": "Mexico City GP", "completed": False},
-    {"round": 21, "circuit": "interlagos", "name": "Sao Paulo GP", "completed": False},
-    {"round": 22, "circuit": "vegas", "name": "Las Vegas GP", "completed": False},
-    {"round": 23, "circuit": "losail", "name": "Qatar GP", "completed": False},
-    {"round": 24, "circuit": "yas_marina", "name": "Abu Dhabi GP", "completed": False},
+    {"round": 1, "circuit": "albert_park", "name": "Australian GP", "date": "2026-03-08"},
+    {"round": 2, "circuit": "shanghai", "name": "Chinese GP", "date": "2026-03-15"},
+    {"round": 3, "circuit": "suzuka", "name": "Japanese GP", "date": "2026-03-29"},
+    {"round": 4, "circuit": "miami", "name": "Miami GP", "date": "2026-05-03"},
+    {"round": 5, "circuit": "villeneuve", "name": "Canadian GP", "date": "2026-05-24"},
+    {"round": 6, "circuit": "monaco", "name": "Monaco GP", "date": "2026-06-07"},
+    {"round": 7, "circuit": "catalunya", "name": "Barcelona GP", "date": "2026-06-14"},
+    {"round": 8, "circuit": "red_bull_ring", "name": "Austrian GP", "date": "2026-06-28"},
+    {"round": 9, "circuit": "silverstone", "name": "British GP", "date": "2026-07-05"},
+    {"round": 10, "circuit": "spa", "name": "Belgian GP", "date": "2026-07-19"},
+    {"round": 11, "circuit": "hungaroring", "name": "Hungarian GP", "date": "2026-07-26"},
+    {"round": 12, "circuit": "zandvoort", "name": "Dutch GP", "date": "2026-08-23"},
+    {"round": 13, "circuit": "monza", "name": "Italian GP", "date": "2026-09-06"},
+    {"round": 14, "circuit": "madring", "name": "Spanish GP", "date": "2026-09-13"},
+    {"round": 15, "circuit": "baku", "name": "Azerbaijan GP", "date": "2026-09-26"},
+    {"round": 16, "circuit": "sepang", "name": "Bahrain GP in Malaysia", "date": "2026-10-04"},
+    {"round": 17, "circuit": "marina_bay", "name": "Singapore GP", "date": "2026-10-11"},
+    {"round": 18, "circuit": "americas", "name": "United States GP", "date": "2026-10-25"},
+    {"round": 19, "circuit": "rodriguez", "name": "Mexico City GP", "date": "2026-11-01"},
+    {"round": 20, "circuit": "interlagos", "name": "Brazilian GP", "date": "2026-11-08"},
+    {"round": 21, "circuit": "vegas", "name": "Las Vegas GP", "date": "2026-11-22"},
+    {"round": 22, "circuit": "losail", "name": "Qatar GP", "date": "2026-11-29"},
+    {"round": 23, "circuit": "yas_marina", "name": "Abu Dhabi GP", "date": "2026-12-06"},
 ]
 
 
@@ -1176,6 +1187,7 @@ def _race_list():
             "round": c["round"],
             "drivers": 22,
             "name": f"2026 - {c['name']}",
+            "date": c["date"],
             "is_future": True,
         }
         for c in F1_2026_CIRCUITS

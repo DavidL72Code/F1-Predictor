@@ -457,7 +457,14 @@ function HeroStage({ years, selectedYear, setYear, raceOptions, selectedRaceKey,
                       supplies. CIRCUIT_DATA is keyed by circuit alone, so its
                       round/date describe one 2026 entry and were wrong for both
                       the current calendar and every historical season. */}
-                  <div className="hero-circuit-popup-row"><span>Round {selectedRace?.round}</span><span>{selectedRace?.year}</span></div>
+                  <div className="hero-circuit-popup-row">
+                    <span>Round {selectedRace?.round}</span>
+                    <span>
+                      {selectedRace?.date
+                        ? new Date(`${selectedRace.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        : selectedRace?.year}
+                    </span>
+                  </div>
                   <div className="hero-circuit-popup-row"><span>Location</span><span>{smData.city}, {smData.country}</span></div>
                   <div className="hero-circuit-popup-row"><span>Laps</span><span>{smData.laps}</span></div>
                   <div className="hero-circuit-popup-row"><span>Circuit Length</span><span>{smData.circuit_length_miles} mi / {smData.circuit_length_km} km</span></div>
