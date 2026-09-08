@@ -9,7 +9,6 @@ import time
 from collections import defaultdict, deque
 from functools import lru_cache
 
-import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
@@ -43,7 +42,6 @@ app.add_middleware(
 BASE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(BASE, "../..")
 DATA = os.path.join(ROOT, "data")
-MODELS = os.path.join(ROOT, "models")
 FEATURE_SEARCH_RESULTS = os.path.join(DATA, "processed", "feature_search_results.json")
 FEATURE_SEARCH_PROFILE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_summary.json")
 FEATURE_SEARCH_PROFILE_LIVE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_live_summary.json")
@@ -60,7 +58,13 @@ DEFAULT_PROFILE = "winner"
 # this weighting was introduced to survive. Adaptation to a new season comes
 # from refitting on every prior round, not from overweighting recent rows.
 CURRENT_SEASON_WEIGHT = 1.0
-PREVIOUS_SEASON_WEIGHT = 3.0
+# Was 3.0, which left the previous season weighted more heavily than the current
+# one once CURRENT_SEASON_WEIGHT dropped to 1.0 — an inverted recency curve
+# nobody would pick deliberately. It is also the term the walk-forward benchmark
+# never modelled: scripts/tune_alpha.py weights only the current season, so a
+# non-1.0 value here means the shipped model differs from the measured one.
+# Uniform keeps the two in agreement.
+PREVIOUS_SEASON_WEIGHT = 1.0
 TWO_SEASONS_BACK_WEIGHT = 1.0
 RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "45"))
@@ -540,12 +544,6 @@ def load_feature_profiles():
     return profiles
 
 
-def train_profile_xgb(df_clean_profile, features):
-    model = build_xgb_model()
-    model.fit(df_clean_profile[features], df_clean_profile[TARGET])
-    return model
-
-
 def build_xgb_model(**overrides):
     params = {
         "colsample_bytree": 0.7,
@@ -561,10 +559,21 @@ def build_xgb_model(**overrides):
 
 
 def build_profile_runtimes():
-    runtimes = {}
-    loaded_xgb_model = joblib.load(f"{MODELS}/position_ranker.pkl")
-    loaded_model_features = [str(feature) for feature in getattr(loaded_xgb_model, "feature_names_in_", [])]
+    """Build the per-profile runtime: feature list plus its cleaned frame.
 
+    This used to load models/position_ranker.pkl and, when its feature list did
+    not match the profile's, retrain an XGBoost model at import time. The two
+    profiles use 11 and 9 features against one stored list, so at least one
+    always retrained — in practice both did, which is most of the cold start.
+
+    The result was stored as runtime["xgb_model"] and never read: both
+    prediction paths fit their own models per request (see predict_historical
+    and predict_future_2026). So the load and the retraining were pure cost.
+
+    models/ is kept as a provenance artifact of how the original ranker was
+    produced; it is simply not part of the serving path.
+    """
+    runtimes = {}
     for profile_key, profile in load_feature_profiles().items():
         features = profile["features"]
         missing_features = [feature for feature in features if feature not in df.columns]
@@ -575,16 +584,9 @@ def build_profile_runtimes():
         if df_clean_profile.empty:
             raise RuntimeError(f"No rows available after dropping NaNs for profile {profile_key}")
 
-        if loaded_model_features == features:
-            profile_xgb = loaded_xgb_model
-        else:
-            print(f"Re-training historical ranker for profile '{profile_key}' with {len(features)} features...")
-            profile_xgb = train_profile_xgb(df_clean_profile, features)
-
         runtimes[profile_key] = {
             **profile,
             "df_clean": df_clean_profile,
-            "xgb_model": profile_xgb,
         }
 
         print(
@@ -667,15 +669,10 @@ def compute_live_feature_search_benchmark(profile_runtime):
         baseline.fit(X_train_scaled, y_train)
         baseline_preds = baseline.predict(X_test_scaled)
 
-        benchmark_xgb = XGBRegressor(
-            colsample_bytree=0.7,
-            learning_rate=0.05,
-            max_depth=3,
-            n_estimators=100,
-            subsample=0.9,
-            random_state=42,
-            eval_metric="mae",
-        )
+        # Was an inline XGBRegressor repeating build_xgb_model's defaults
+        # verbatim. Two copies of the same hyperparameters means retuning the
+        # model silently leaves the benchmark measuring the old one.
+        benchmark_xgb = build_xgb_model()
         benchmark_xgb.fit(X_train, y_train)
         xgb_preds = benchmark_xgb.predict(X_test)
 
@@ -1143,8 +1140,15 @@ def health():
     }
 
 
-@app.get("/races")
-def get_races():
+@lru_cache(maxsize=1)
+def _race_list():
+    """Build the race list once.
+
+    This ran a groupby plus a per-group iterrows over the whole frame on every
+    request, and it is the first call the app makes on load. The inputs are the
+    committed CSVs, which only change when the service restarts, so the result
+    is fixed for the life of the process.
+    """
     hist = (
         df.groupby(["year", "circuit", "round"])
         .size()
@@ -1178,6 +1182,11 @@ def get_races():
         if int(c["round"]) not in completed_2026_rounds
     ]
     return historical + future
+
+
+@app.get("/races")
+def get_races():
+    return _race_list()
 
 
 @app.get("/races/{year}/{round_number}")

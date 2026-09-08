@@ -49,21 +49,18 @@ export const INK = {
   grid: "#1c1c2a",
 }
 
-/* Keyed to CATEGORICAL_4 in MODELS order. Ridge keeps its blue and XGBoost
-   its red from the original app; only the ensembles moved. */
-export const MODEL_HUE = {
-  baseline: "#4488FF",
-  xgboost: "#E8003D",
-  ensemble_winner: "#8E7CE8",
-  ensemble_position: "#B8860B",
-}
+/* Derived from CATEGORICAL_4 rather than repeating the hex values, so the
+   validation measured above stays true of what is actually rendered. Ridge
+   keeps its blue and XGBoost its red from the original app; only the ensembles
+   moved, to keep gold away from red. */
+const [RIDGE, XGB, ENS_WINNER, ENS_POSITION] = CATEGORICAL_4
 
-export const MODELS = [
-  { key: "baseline", chartKey: "Baseline", label: "Ridge Baseline", blurb: "Linear — stable under drift" },
-  { key: "xgboost", chartKey: "XGBoost", label: "XGBoost", blurb: "Trees — non-linear interactions" },
-  { key: "ensemble_winner", chartKey: "Ens.Winner", label: "Ensemble · Winner", blurb: "α-blend tuned for P1 hit rate" },
-  { key: "ensemble_position", chartKey: "Ens.Position", label: "Ensemble · Position", blurb: "α-blend tuned for full-grid order" },
-]
+export const MODEL_HUE = {
+  baseline: RIDGE,
+  xgboost: XGB,
+  ensemble_winner: ENS_WINNER,
+  ensemble_position: ENS_POSITION,
+}
 
 /* `better` says which direction is good, so the charts can mark the
    best season without hard-coding per-metric logic. */

@@ -48,6 +48,13 @@ const TRACK_PATH = "M 128 56 H 356 Q 416 56 416 116 V 204 Q 416 264 356 264 H 10
 const FINISH_LINE_X = 128
 const LOADER_LAP_MS = 3200
 
+/* Floor on how long the loader stays up, so a fast response does not flash the
+   spinner and vanish. Deliberately NOT the full lap: predictions were padded to
+   LOADER_LAP_MS so the car could complete a circuit, which meant a 300ms answer
+   still cost the user 3.2s. The lap is the animation's business, not the
+   request's — the car can leave mid-lap. */
+const MIN_LOADER_MS = 600
+
 const readErrorMessage = async (response, fallback) => {
   try {
     const data = await response.json()
@@ -623,7 +630,7 @@ export default function App() {
 
     /* A profile switch re-runs an existing prediction, and forcing the full
        loader lap for that would feel like a stall rather than a refinement. */
-    const minLoadingMs = quiet ? 0 : LOADER_LAP_MS
+    const minLoadingMs = quiet ? 0 : MIN_LOADER_MS
     const startedAt = Date.now()
     hasPredictedRef.current = true
 
@@ -832,8 +839,16 @@ export default function App() {
 
       <div className="footer">
         <span>F1 STRATEGY LAB — 2015–2026</span>
-        <span>4 MODELS · WINNER + FULL ORDER PROFILES · TYRE + WEATHER FEATURES</span>
-        <span>2024 SPEARMAN 0.763 · 2023 WINNER 86.4%</span>
+        <span>RIDGE + XGBOOST + BLEND · WINNER &amp; FULL ORDER PROFILES</span>
+        {/* Was "2024 SPEARMAN 0.763 · 2023 WINNER 86.4%", hardcoded. 86.4% did
+            not correspond to anything the app computed — the current data has
+            2023 Ridge at 81.8%. Read the live profile instead so it cannot
+            drift again. */}
+        <span>
+          {modelStats?.all_metrics
+            ? `${modelStats.selected_method?.toUpperCase()} · SPEARMAN ${Number(modelStats.all_metrics.spearman).toFixed(3)} · WINNER ${Number(modelStats.all_metrics.winner_acc).toFixed(1)}%`
+            : "LOADING MODEL STATS"}
+        </span>
       </div>
 
       </div>
