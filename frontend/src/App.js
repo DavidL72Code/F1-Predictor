@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import ScrollIntro from "./ScrollIntro"
+import useRevalidate from "./useRevalidate"
 import AnalyticsPage from "./AnalyticsPage"
 import UnderTheHoodPage from "./UnderTheHoodPage"
 import { Podium, GridRow, AccuracyKey } from "./RaceResult"
@@ -75,8 +76,17 @@ const expectArray = (value, label) => {
    requests (stores the promise) so toggling profiles or revisiting a page
    reuses the already-loaded data instead of refetching and flickering. */
 const responseCache = new Map()
+
+/* Entries expire. Without this the Map held a response for the life of the tab,
+   so a page left open kept showing whatever was true when it loaded even after
+   the scheduled job changed the live model. Short enough that a tab catches up
+   on its own, long enough to still de-dupe a burst of calls. */
+const CACHE_TTL_MS = 60 * 1000
+
 const cachedJson = (url) => {
-  if (responseCache.has(url)) return responseCache.get(url)
+  const hit = responseCache.get(url)
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.promise
+
   const promise = fetch(url)
     .then(async (r) => {
       if (!r.ok) {
@@ -88,7 +98,7 @@ const cachedJson = (url) => {
       responseCache.delete(url) // let a failed request retry next time
       throw err
     })
-  responseCache.set(url, promise)
+  responseCache.set(url, { promise, at: Date.now() })
   return promise
 }
 
@@ -529,6 +539,7 @@ export default function App() {
   // Pages stay mounted once visited, so switching back is instant and keeps
   // scroll position + in-page state instead of remounting and refetching.
   const [visited, setVisited] = useState({ predict: true })
+  const revalidate = useRevalidate()
 
   useEffect(() => {
     setVisited((v) => (v[page] ? v : { ...v, [page]: true }))
@@ -583,7 +594,9 @@ export default function App() {
       .then((data) => { if (active) setModelStats(data) })
       .catch(console.error)
     return () => { active = false }
-  }, [selectedProfile])
+    // revalidate re-runs this when the tab regains focus, so a session left
+    // open picks up a model change without a manual reload.
+  }, [selectedProfile, revalidate])
 
   useEffect(() => {
     if (!Array.isArray(races)) return

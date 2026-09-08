@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { motion, LayoutGroup } from "motion/react"
 import { GroupedBars, RankedBars, DualLine, StatTile } from "./viz/Charts"
 import { METRICS, CATEGORICAL_2, CATEGORICAL_3 } from "./viz/palette"
+import useRevalidate from "./useRevalidate"
 import "./viz/Charts.css"
 
 const API = process.env.REACT_APP_API_URL?.replace(/\/$/, "")
@@ -71,6 +72,7 @@ export default function AnalyticsPage({ analytics, modelStats, selectedProfile }
   const [showTable, setShowTable] = useState(false)
   const [wf, setWf] = useState(null)
   const [wfError, setWfError] = useState(false)
+  const revalidate = useRevalidate()
 
   useEffect(() => {
     let live = true
@@ -79,7 +81,9 @@ export default function AnalyticsPage({ analytics, modelStats, selectedProfile }
       .then((d) => live && setWf(d))
       .catch(() => live && setWfError(true))
     return () => { live = false }
-  }, [])
+    // This page stays mounted once visited, so without revalidate the effect
+    // would run exactly once and the benchmark would never refresh.
+  }, [revalidate])
 
   const profile = wf?.profiles?.[selectedProfile] || wf?.profiles?.winner
   const bench = useMemo(() => profile?.walk_forward_benchmark || [], [profile])
