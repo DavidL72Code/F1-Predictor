@@ -1,0 +1,333 @@
+/* ══════════════════════════════════════════════════════════════
+   WHY DOES IT WORK — technical deep dive
+   ══════════════════════════════════════════════════════════════ */
+
+.hood-head { padding: 34px 0 26px; max-width: 660px; }
+
+.hood-title {
+  margin: 8px 0 10px;
+  font-size: clamp(28px, 3.8vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  line-height: 1.05;
+  color: #fff;
+}
+
+.hood-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--text-muted); }
+
+.hood-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 44px;
+  align-items: start;
+  padding-bottom: 60px;
+}
+
+/* ── section nav ── */
+
+.hood-nav {
+  position: sticky;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hood-nav-item {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+
+.hood-nav-item:hover { color: var(--text); }
+.hood-nav-item.active { color: #fff; }
+
+.hood-nav-marker {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: var(--surface-2);
+  z-index: -1;
+}
+
+.hood-nav-n {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.hood-nav-item.active .hood-nav-n { color: var(--accent); }
+
+/* ── sections ── */
+
+.hood-body {
+  display: flex;
+  flex-direction: column;
+  gap: 52px;
+  max-width: 760px;
+}
+
+.hood-section h2 {
+  margin: 0 0 14px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  scroll-margin-top: 90px;
+}
+
+.hood-section { scroll-margin-top: 90px; }
+
+.hood-section p {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  max-width: 68ch;
+}
+
+.hood-section strong { color: var(--text); font-weight: 600; }
+.hood-section em { color: var(--text); font-style: italic; }
+
+.hood-aside {
+  font-size: 12px !important;
+  color: var(--text-faint) !important;
+}
+
+/* A quiet left rule, not a 3px accent slab — the thick coloured side
+   tab is the most recognisable tell of a generated UI. */
+.hood-callout {
+  padding: 12px 0 12px 16px;
+  border-left: 1px solid var(--border-strong);
+  font-size: 13px !important;
+  color: var(--text) !important;
+}
+
+/* ── two-column panels ── */
+
+.hood-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.hood-panel {
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.hood-panel-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  margin-bottom: 10px;
+}
+
+.hood-panel ul { margin: 0; padding-left: 16px; }
+
+.hood-panel li {
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--text-muted);
+}
+
+/* ── model cards ── */
+
+.hood-models {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hood-model {
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.hood-model header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.hood-model header i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.hood-model h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.hood-formula {
+  display: block;
+  padding: 9px 11px;
+  margin-bottom: 14px;
+  border-radius: 5px;
+  background: var(--surface-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  overflow-x: auto;
+}
+
+.hood-model dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; }
+
+.hood-model dt {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+  padding-top: 2px;
+  white-space: nowrap;
+}
+
+.hood-model dd { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+
+/* ── blend demo ── */
+
+.hood-blend {
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  margin-top: 18px;
+}
+
+.hood-blend-formula {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
+.hood-slider { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+
+.hood-slider span {
+  font-size: 12px;
+  color: #fff;
+  min-width: 68px;
+}
+
+.hood-slider input {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  appearance: none;
+  cursor: pointer;
+}
+
+.hood-slider input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  cursor: grab;
+}
+
+.hood-slider input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: grab;
+}
+
+.hood-blend-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+
+.hood-blend-row {
+  display: grid;
+  grid-template-columns: 74px 1fr 42px;
+  align-items: center;
+  gap: 12px;
+}
+
+.hood-blend-name { font-size: 12px; color: var(--text-muted); }
+
+.hood-blend-track {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.hood-blend-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+
+.hood-blend-pct { font-size: 11.5px; color: var(--text-muted); text-align: right; }
+
+.hood-blend-out {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.hood-blend-out-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.hood-blend-out-value { font-size: 28px; font-weight: 800; color: #fff; line-height: 1.1; }
+
+.hood-blend-out-note { font-size: 11px; color: var(--text-faint); line-height: 1.6; }
+
+/* ── unknowns ── */
+
+.hood-unknowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 18px;
+}
+
+.hood-unknowns span {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px dashed var(--border-strong);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.hood-drift { margin: 20px 0 14px; }
+
+@media (max-width: 900px) {
+  .hood-layout { grid-template-columns: 1fr; gap: 24px; }
+
+  .hood-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 6px;
+  }
+
+  .hood-nav-item { white-space: nowrap; }
+  .hood-body { gap: 40px; }
+}

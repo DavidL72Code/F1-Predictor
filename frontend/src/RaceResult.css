@@ -1,0 +1,190 @@
+/* ══════════════════════════════════════════════════════════════
+   SIMULATE RACE — podium & finishing order
+   ══════════════════════════════════════════════════════════════ */
+
+.rr-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+  margin-bottom: 14px;
+}
+
+.rr-podium { margin: 0 0 26px; }
+
+.rr-podium-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rr-step { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.rr-step-driver { text-align: center; width: 104px; }
+
+.rr-step-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.rr-step-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.rr-step-team i { width: 6px; height: 6px; border-radius: 2px; flex: none; }
+
+.rr-step-prob { display: block; margin-top: 3px; font-size: 10.5px; color: var(--text-faint); }
+
+.rr-step-block {
+  position: relative;
+  width: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px 6px 0 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  overflow: hidden;
+}
+
+.rr-step-pos { font-size: 34px; font-weight: 800; color: var(--text-faint); }
+
+.rr-step-1 { background: var(--surface-3); }
+.rr-step-1 .rr-step-pos { color: var(--text-muted); }
+
+.rr-step-edge { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; }
+
+/* ── finishing order ── */
+
+.rr-row {
+  display: grid;
+  grid-template-columns: 30px 4px minmax(0, 1fr) 108px 40px 62px;
+  align-items: center;
+  gap: 0 12px;
+  padding: 8px 12px;
+  margin-bottom: 3px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.rr-row.is-podium { background: var(--surface-2); }
+
+.rr-pos {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.rr-row.is-podium .rr-pos { font-size: 14px; color: #fff; }
+
+.rr-team-chip { width: 4px; height: 26px; border-radius: 2px; }
+
+.rr-driver { min-width: 0; }
+
+.rr-driver-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rr-driver-meta {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rr-prob { display: flex; align-items: center; gap: 8px; }
+
+.rr-prob-track {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.rr-prob-fill { display: block; height: 100%; border-radius: 2px; background: #4488FF; }
+
+.rr-prob-value {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 30px;
+  text-align: right;
+}
+
+.rr-grid { font-size: 10px; color: var(--text-faint); text-align: center; }
+
+.rr-actual {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rr-actual-empty { color: var(--border-strong); }
+
+/* ── key ── */
+
+.rr-key { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+
+.rr-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.rr-key i { font-style: normal; font-size: 11px; }
+
+@media (max-width: 640px) {
+  .rr-row { grid-template-columns: 26px 4px minmax(0, 1fr) 70px 48px; }
+  .rr-grid { display: none; }
+  .rr-step-driver { width: 84px; }
+  .rr-step-block { width: 78px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ENTRANCES
+
+   The finishing order does NOT animate in. Rows carry the actual
+   result, and any time-driven entrance is paused at its first frame
+   while the document is hidden — measured: 20 rows at opacity 0,
+   podium heights 0,0,0. Fill mode does not help; a running-but-paused
+   animation holds its from-state either way.
+
+   The podium keeps a flourish, but one whose worst case is legible:
+   it settles from slightly dim and 8px low, never from nothing. The
+   results appearing at all is already the feedback for the click.
+   ══════════════════════════════════════════════════════════════ */
+
+.rr-step-block { transform-origin: bottom center; }
+
+@keyframes rr-settle {
+  from { opacity: 0.55; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rr-step-block { animation: rr-settle 0.45s cubic-bezier(0.22, 0.61, 0.36, 1); }
+}

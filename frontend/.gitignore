@@ -13,6 +13,12 @@
 
 # misc
 .DS_Store
+
+# Local env. CRA's default only lists the .local variants, which leaves a plain
+# .env — the usual place people put local config — tracked by default.
+.env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local

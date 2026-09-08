@@ -1,0 +1,2567 @@
+{
+  "strategy": "random",
+  "test_configs": [
+    [
+      2022,
+      2021
+    ],
+    [
+      2023,
+      2022
+    ],
+    [
+      2024,
+      2023
+    ]
+  ],
+  "search_space": {
+    "core_features": [
+      "grid",
+      "quali_pos"
+    ],
+    "optional_features": [
+      "quali_gap",
+      "grid_penalty",
+      "driver_form",
+      "team_win_rate",
+      "circuit_wins_before",
+      "circuit_avg_finish",
+      "circuit_overperformance",
+      "driver_finish_rate",
+      "constructor_rank_norm",
+      "constructor_momentum",
+      "starting_compound",
+      "circuit_type",
+      "wet_race",
+      "track_temp",
+      "team_encoded",
+      "circuit_encoded"
+    ],
+    "min_k": 3,
+    "max_k": 8,
+    "random_samples": 8,
+    "seed": 42
+  },
+  "best_by_metric": {
+    "winner_acc": {
+      "features": [
+        "grid",
+        "quali_pos",
+        "constructor_momentum",
+        "grid_penalty",
+        "team_win_rate"
+      ],
+      "winner_acc": 54.672,
+      "podium_acc": 19.192,
+      "spearman": 0.657,
+      "mae": 3.279,
+      "ndcg": 0.966,
+      "within_3": 56.937,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 13.636,
+            "spearman": 0.593,
+            "mae": 3.488,
+            "ndcg": 0.969,
+            "within_3": 53.636,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 40.909,
+            "podium_acc": 18.182,
+            "spearman": 0.589,
+            "mae": 3.498,
+            "ndcg": 0.957,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 90.909,
+            "podium_acc": 18.182,
+            "spearman": 0.636,
+            "mae": 3.371,
+            "ndcg": 0.975,
+            "within_3": 53.182,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 77.273,
+            "podium_acc": 22.727,
+            "spearman": 0.633,
+            "mae": 3.415,
+            "ndcg": 0.976,
+            "within_3": 53.864,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 37.5,
+            "podium_acc": 16.667,
+            "spearman": 0.752,
+            "mae": 2.966,
+            "ndcg": 0.966,
+            "within_3": 59.499,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 45.833,
+            "podium_acc": 16.667,
+            "spearman": 0.749,
+            "mae": 2.923,
+            "ndcg": 0.966,
+            "within_3": 62.63,
+            "races": 24
+          }
+        }
+      ]
+    },
+    "spearman": {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_avg_finish",
+        "circuit_overperformance",
+        "constructor_rank_norm",
+        "driver_form",
+        "quali_gap"
+      ],
+      "winner_acc": 54.545,
+      "podium_acc": 21.97,
+      "spearman": 0.673,
+      "mae": 3.217,
+      "ndcg": 0.969,
+      "within_3": 58.131,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 59.091,
+            "podium_acc": 36.364,
+            "spearman": 0.617,
+            "mae": 3.455,
+            "ndcg": 0.969,
+            "within_3": 54.545,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 40.909,
+            "podium_acc": 27.273,
+            "spearman": 0.61,
+            "mae": 3.451,
+            "ndcg": 0.962,
+            "within_3": 56.591,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 86.364,
+            "podium_acc": 18.182,
+            "spearman": 0.661,
+            "mae": 3.303,
+            "ndcg": 0.975,
+            "within_3": 54.545,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 72.727,
+            "podium_acc": 13.636,
+            "spearman": 0.654,
+            "mae": 3.302,
+            "ndcg": 0.973,
+            "within_3": 54.545,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 25.0,
+            "spearman": 0.759,
+            "mae": 2.877,
+            "ndcg": 0.97,
+            "within_3": 64.092,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 50.0,
+            "podium_acc": 25.0,
+            "spearman": 0.755,
+            "mae": 2.897,
+            "ndcg": 0.971,
+            "within_3": 63.257,
+            "races": 24
+          }
+        }
+      ]
+    },
+    "mae": {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_overperformance",
+        "circuit_wins_before",
+        "constructor_rank_norm",
+        "grid_penalty",
+        "team_win_rate"
+      ],
+      "winner_acc": 50.253,
+      "podium_acc": 21.97,
+      "spearman": 0.666,
+      "mae": 3.213,
+      "ndcg": 0.97,
+      "within_3": 58.162,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 27.273,
+            "spearman": 0.611,
+            "mae": 3.415,
+            "ndcg": 0.971,
+            "within_3": 56.591,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.596,
+            "mae": 3.495,
+            "ndcg": 0.961,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 81.818,
+            "podium_acc": 18.182,
+            "spearman": 0.665,
+            "mae": 3.203,
+            "ndcg": 0.977,
+            "within_3": 57.727,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 72.727,
+            "podium_acc": 18.182,
+            "spearman": 0.659,
+            "mae": 3.255,
+            "ndcg": 0.976,
+            "within_3": 57.955,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 33.333,
+            "podium_acc": 20.833,
+            "spearman": 0.753,
+            "mae": 2.916,
+            "ndcg": 0.967,
+            "within_3": 62.422,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 41.667,
+            "podium_acc": 25.0,
+            "spearman": 0.743,
+            "mae": 2.889,
+            "ndcg": 0.974,
+            "within_3": 62.213,
+            "races": 24
+          }
+        }
+      ]
+    }
+  },
+  "top_20_by_metric": {
+    "winner_acc": [
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "constructor_momentum",
+          "grid_penalty",
+          "team_win_rate"
+        ],
+        "winner_acc": 54.672,
+        "podium_acc": 19.192,
+        "spearman": 0.657,
+        "mae": 3.279,
+        "ndcg": 0.966,
+        "within_3": 56.937,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 13.636,
+              "spearman": 0.593,
+              "mae": 3.488,
+              "ndcg": 0.969,
+              "within_3": 53.636,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 40.909,
+              "podium_acc": 18.182,
+              "spearman": 0.589,
+              "mae": 3.498,
+              "ndcg": 0.957,
+              "within_3": 54.318,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 90.909,
+              "podium_acc": 18.182,
+              "spearman": 0.636,
+              "mae": 3.371,
+              "ndcg": 0.975,
+              "within_3": 53.182,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 77.273,
+              "podium_acc": 22.727,
+              "spearman": 0.633,
+              "mae": 3.415,
+              "ndcg": 0.976,
+              "within_3": 53.864,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 37.5,
+              "podium_acc": 16.667,
+              "spearman": 0.752,
+              "mae": 2.966,
+              "ndcg": 0.966,
+              "within_3": 59.499,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 45.833,
+              "podium_acc": 16.667,
+              "spearman": 0.749,
+              "mae": 2.923,
+              "ndcg": 0.966,
+              "within_3": 62.63,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_overperformance",
+          "constructor_rank_norm",
+          "driver_form",
+          "quali_gap"
+        ],
+        "winner_acc": 54.545,
+        "podium_acc": 21.97,
+        "spearman": 0.673,
+        "mae": 3.217,
+        "ndcg": 0.969,
+        "within_3": 58.131,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 59.091,
+              "podium_acc": 36.364,
+              "spearman": 0.617,
+              "mae": 3.455,
+              "ndcg": 0.969,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 40.909,
+              "podium_acc": 27.273,
+              "spearman": 0.61,
+              "mae": 3.451,
+              "ndcg": 0.962,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 18.182,
+              "spearman": 0.661,
+              "mae": 3.303,
+              "ndcg": 0.975,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 13.636,
+              "spearman": 0.654,
+              "mae": 3.302,
+              "ndcg": 0.973,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.759,
+              "mae": 2.877,
+              "ndcg": 0.97,
+              "within_3": 64.092,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.755,
+              "mae": 2.897,
+              "ndcg": 0.971,
+              "within_3": 63.257,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_overperformance",
+          "circuit_wins_before",
+          "constructor_rank_norm",
+          "grid_penalty",
+          "team_win_rate"
+        ],
+        "winner_acc": 50.253,
+        "podium_acc": 21.97,
+        "spearman": 0.666,
+        "mae": 3.213,
+        "ndcg": 0.97,
+        "within_3": 58.162,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 27.273,
+              "spearman": 0.611,
+              "mae": 3.415,
+              "ndcg": 0.971,
+              "within_3": 56.591,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.596,
+              "mae": 3.495,
+              "ndcg": 0.961,
+              "within_3": 54.318,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 81.818,
+              "podium_acc": 18.182,
+              "spearman": 0.665,
+              "mae": 3.203,
+              "ndcg": 0.977,
+              "within_3": 57.727,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 18.182,
+              "spearman": 0.659,
+              "mae": 3.255,
+              "ndcg": 0.976,
+              "within_3": 57.955,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 33.333,
+              "podium_acc": 20.833,
+              "spearman": 0.753,
+              "mae": 2.916,
+              "ndcg": 0.967,
+              "within_3": 62.422,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 25.0,
+              "spearman": 0.743,
+              "mae": 2.889,
+              "ndcg": 0.974,
+              "within_3": 62.213,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "starting_compound"
+        ],
+        "winner_acc": 50.0,
+        "podium_acc": 20.581,
+        "spearman": 0.662,
+        "mae": 3.261,
+        "ndcg": 0.964,
+        "within_3": 58.151,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 40.909,
+              "podium_acc": 18.182,
+              "spearman": 0.6,
+              "mae": 3.487,
+              "ndcg": 0.959,
+              "within_3": 53.864,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.594,
+              "mae": 3.491,
+              "ndcg": 0.952,
+              "within_3": 54.091,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 68.182,
+              "podium_acc": 13.636,
+              "spearman": 0.624,
+              "mae": 3.537,
+              "ndcg": 0.969,
+              "within_3": 52.955,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 63.636,
+              "podium_acc": 18.182,
+              "spearman": 0.63,
+              "mae": 3.434,
+              "ndcg": 0.968,
+              "within_3": 55.227,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 16.667,
+              "spearman": 0.764,
+              "mae": 2.885,
+              "ndcg": 0.972,
+              "within_3": 61.378,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 20.833,
+              "spearman": 0.762,
+              "mae": 2.859,
+              "ndcg": 0.972,
+              "within_3": 65.136,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_encoded",
+          "circuit_overperformance",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "driver_form",
+          "grid_penalty",
+          "track_temp"
+        ],
+        "winner_acc": 48.738,
+        "podium_acc": 19.318,
+        "spearman": 0.669,
+        "mae": 3.226,
+        "ndcg": 0.969,
+        "within_3": 58.409,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 36.364,
+              "podium_acc": 31.818,
+              "spearman": 0.603,
+              "mae": 3.484,
+              "ndcg": 0.963,
+              "within_3": 54.091,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 27.273,
+              "spearman": 0.607,
+              "mae": 3.446,
+              "ndcg": 0.958,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 9.091,
+              "spearman": 0.647,
+              "mae": 3.366,
+              "ndcg": 0.975,
+              "within_3": 54.318,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 68.182,
+              "podium_acc": 18.182,
+              "spearman": 0.647,
+              "mae": 3.324,
+              "ndcg": 0.974,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 58.333,
+              "podium_acc": 20.833,
+              "spearman": 0.767,
+              "mae": 2.821,
+              "ndcg": 0.969,
+              "within_3": 63.257,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 12.5,
+              "spearman": 0.752,
+              "mae": 2.908,
+              "ndcg": 0.974,
+              "within_3": 64.092,
+              "races": 24
+            }
+          }
+        ]
+      }
+    ],
+    "spearman": [
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_overperformance",
+          "constructor_rank_norm",
+          "driver_form",
+          "quali_gap"
+        ],
+        "winner_acc": 54.545,
+        "podium_acc": 21.97,
+        "spearman": 0.673,
+        "mae": 3.217,
+        "ndcg": 0.969,
+        "within_3": 58.131,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 59.091,
+              "podium_acc": 36.364,
+              "spearman": 0.617,
+              "mae": 3.455,
+              "ndcg": 0.969,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 40.909,
+              "podium_acc": 27.273,
+              "spearman": 0.61,
+              "mae": 3.451,
+              "ndcg": 0.962,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 18.182,
+              "spearman": 0.661,
+              "mae": 3.303,
+              "ndcg": 0.975,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 13.636,
+              "spearman": 0.654,
+              "mae": 3.302,
+              "ndcg": 0.973,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.759,
+              "mae": 2.877,
+              "ndcg": 0.97,
+              "within_3": 64.092,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.755,
+              "mae": 2.897,
+              "ndcg": 0.971,
+              "within_3": 63.257,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_overperformance",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "team_encoded",
+          "team_win_rate"
+        ],
+        "winner_acc": 48.485,
+        "podium_acc": 20.707,
+        "spearman": 0.669,
+        "mae": 3.223,
+        "ndcg": 0.963,
+        "within_3": 58.289,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 59.091,
+              "podium_acc": 13.636,
+              "spearman": 0.605,
+              "mae": 3.378,
+              "ndcg": 0.969,
+              "within_3": 57.273,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 22.727,
+              "podium_acc": 22.727,
+              "spearman": 0.6,
+              "mae": 3.451,
+              "ndcg": 0.954,
+              "within_3": 55.909,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 27.273,
+              "spearman": 0.649,
+              "mae": 3.325,
+              "ndcg": 0.975,
+              "within_3": 56.364,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 22.727,
+              "spearman": 0.66,
+              "mae": 3.321,
+              "ndcg": 0.975,
+              "within_3": 55.909,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 45.833,
+              "podium_acc": 16.667,
+              "spearman": 0.762,
+              "mae": 2.864,
+              "ndcg": 0.963,
+              "within_3": 63.048,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 16.667,
+              "spearman": 0.746,
+              "mae": 2.897,
+              "ndcg": 0.961,
+              "within_3": 63.048,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_encoded",
+          "circuit_overperformance",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "driver_form",
+          "grid_penalty",
+          "track_temp"
+        ],
+        "winner_acc": 48.738,
+        "podium_acc": 19.318,
+        "spearman": 0.669,
+        "mae": 3.226,
+        "ndcg": 0.969,
+        "within_3": 58.409,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 36.364,
+              "podium_acc": 31.818,
+              "spearman": 0.603,
+              "mae": 3.484,
+              "ndcg": 0.963,
+              "within_3": 54.091,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 27.273,
+              "spearman": 0.607,
+              "mae": 3.446,
+              "ndcg": 0.958,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 9.091,
+              "spearman": 0.647,
+              "mae": 3.366,
+              "ndcg": 0.975,
+              "within_3": 54.318,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 68.182,
+              "podium_acc": 18.182,
+              "spearman": 0.647,
+              "mae": 3.324,
+              "ndcg": 0.974,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 58.333,
+              "podium_acc": 20.833,
+              "spearman": 0.767,
+              "mae": 2.821,
+              "ndcg": 0.969,
+              "within_3": 63.257,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 12.5,
+              "spearman": 0.752,
+              "mae": 2.908,
+              "ndcg": 0.974,
+              "within_3": 64.092,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_overperformance",
+          "circuit_wins_before",
+          "constructor_rank_norm",
+          "grid_penalty",
+          "team_win_rate"
+        ],
+        "winner_acc": 50.253,
+        "podium_acc": 21.97,
+        "spearman": 0.666,
+        "mae": 3.213,
+        "ndcg": 0.97,
+        "within_3": 58.162,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 27.273,
+              "spearman": 0.611,
+              "mae": 3.415,
+              "ndcg": 0.971,
+              "within_3": 56.591,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.596,
+              "mae": 3.495,
+              "ndcg": 0.961,
+              "within_3": 54.318,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 81.818,
+              "podium_acc": 18.182,
+              "spearman": 0.665,
+              "mae": 3.203,
+              "ndcg": 0.977,
+              "within_3": 57.727,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 18.182,
+              "spearman": 0.659,
+              "mae": 3.255,
+              "ndcg": 0.976,
+              "within_3": 57.955,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 33.333,
+              "podium_acc": 20.833,
+              "spearman": 0.753,
+              "mae": 2.916,
+              "ndcg": 0.967,
+              "within_3": 62.422,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 25.0,
+              "spearman": 0.743,
+              "mae": 2.889,
+              "ndcg": 0.974,
+              "within_3": 62.213,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "starting_compound"
+        ],
+        "winner_acc": 50.0,
+        "podium_acc": 20.581,
+        "spearman": 0.662,
+        "mae": 3.261,
+        "ndcg": 0.964,
+        "within_3": 58.151,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 40.909,
+              "podium_acc": 18.182,
+              "spearman": 0.6,
+              "mae": 3.487,
+              "ndcg": 0.959,
+              "within_3": 53.864,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.594,
+              "mae": 3.491,
+              "ndcg": 0.952,
+              "within_3": 54.091,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 68.182,
+              "podium_acc": 13.636,
+              "spearman": 0.624,
+              "mae": 3.537,
+              "ndcg": 0.969,
+              "within_3": 52.955,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 63.636,
+              "podium_acc": 18.182,
+              "spearman": 0.63,
+              "mae": 3.434,
+              "ndcg": 0.968,
+              "within_3": 55.227,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 16.667,
+              "spearman": 0.764,
+              "mae": 2.885,
+              "ndcg": 0.972,
+              "within_3": 61.378,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 20.833,
+              "spearman": 0.762,
+              "mae": 2.859,
+              "ndcg": 0.972,
+              "within_3": 65.136,
+              "races": 24
+            }
+          }
+        ]
+      }
+    ],
+    "mae": [
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_overperformance",
+          "circuit_wins_before",
+          "constructor_rank_norm",
+          "grid_penalty",
+          "team_win_rate"
+        ],
+        "winner_acc": 50.253,
+        "podium_acc": 21.97,
+        "spearman": 0.666,
+        "mae": 3.213,
+        "ndcg": 0.97,
+        "within_3": 58.162,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 27.273,
+              "spearman": 0.611,
+              "mae": 3.415,
+              "ndcg": 0.971,
+              "within_3": 56.591,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.596,
+              "mae": 3.495,
+              "ndcg": 0.961,
+              "within_3": 54.318,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 81.818,
+              "podium_acc": 18.182,
+              "spearman": 0.665,
+              "mae": 3.203,
+              "ndcg": 0.977,
+              "within_3": 57.727,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 18.182,
+              "spearman": 0.659,
+              "mae": 3.255,
+              "ndcg": 0.976,
+              "within_3": 57.955,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 33.333,
+              "podium_acc": 20.833,
+              "spearman": 0.753,
+              "mae": 2.916,
+              "ndcg": 0.967,
+              "within_3": 62.422,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 25.0,
+              "spearman": 0.743,
+              "mae": 2.889,
+              "ndcg": 0.974,
+              "within_3": 62.213,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_overperformance",
+          "constructor_rank_norm",
+          "driver_form",
+          "quali_gap"
+        ],
+        "winner_acc": 54.545,
+        "podium_acc": 21.97,
+        "spearman": 0.673,
+        "mae": 3.217,
+        "ndcg": 0.969,
+        "within_3": 58.131,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 59.091,
+              "podium_acc": 36.364,
+              "spearman": 0.617,
+              "mae": 3.455,
+              "ndcg": 0.969,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 40.909,
+              "podium_acc": 27.273,
+              "spearman": 0.61,
+              "mae": 3.451,
+              "ndcg": 0.962,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 18.182,
+              "spearman": 0.661,
+              "mae": 3.303,
+              "ndcg": 0.975,
+              "within_3": 54.545,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 13.636,
+              "spearman": 0.654,
+              "mae": 3.302,
+              "ndcg": 0.973,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.759,
+              "mae": 2.877,
+              "ndcg": 0.97,
+              "within_3": 64.092,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 25.0,
+              "spearman": 0.755,
+              "mae": 2.897,
+              "ndcg": 0.971,
+              "within_3": 63.257,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_overperformance",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "team_encoded",
+          "team_win_rate"
+        ],
+        "winner_acc": 48.485,
+        "podium_acc": 20.707,
+        "spearman": 0.669,
+        "mae": 3.223,
+        "ndcg": 0.963,
+        "within_3": 58.289,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 59.091,
+              "podium_acc": 13.636,
+              "spearman": 0.605,
+              "mae": 3.378,
+              "ndcg": 0.969,
+              "within_3": 57.273,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 22.727,
+              "podium_acc": 22.727,
+              "spearman": 0.6,
+              "mae": 3.451,
+              "ndcg": 0.954,
+              "within_3": 55.909,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 27.273,
+              "spearman": 0.649,
+              "mae": 3.325,
+              "ndcg": 0.975,
+              "within_3": 56.364,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 72.727,
+              "podium_acc": 22.727,
+              "spearman": 0.66,
+              "mae": 3.321,
+              "ndcg": 0.975,
+              "within_3": 55.909,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 45.833,
+              "podium_acc": 16.667,
+              "spearman": 0.762,
+              "mae": 2.864,
+              "ndcg": 0.963,
+              "within_3": 63.048,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 16.667,
+              "spearman": 0.746,
+              "mae": 2.897,
+              "ndcg": 0.961,
+              "within_3": 63.048,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "circuit_avg_finish",
+          "circuit_encoded",
+          "circuit_overperformance",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "driver_form",
+          "grid_penalty",
+          "track_temp"
+        ],
+        "winner_acc": 48.738,
+        "podium_acc": 19.318,
+        "spearman": 0.669,
+        "mae": 3.226,
+        "ndcg": 0.969,
+        "within_3": 58.409,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 36.364,
+              "podium_acc": 31.818,
+              "spearman": 0.603,
+              "mae": 3.484,
+              "ndcg": 0.963,
+              "within_3": 54.091,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 27.273,
+              "spearman": 0.607,
+              "mae": 3.446,
+              "ndcg": 0.958,
+              "within_3": 54.545,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 86.364,
+              "podium_acc": 9.091,
+              "spearman": 0.647,
+              "mae": 3.366,
+              "ndcg": 0.975,
+              "within_3": 54.318,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 68.182,
+              "podium_acc": 18.182,
+              "spearman": 0.647,
+              "mae": 3.324,
+              "ndcg": 0.974,
+              "within_3": 56.591,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 58.333,
+              "podium_acc": 20.833,
+              "spearman": 0.767,
+              "mae": 2.821,
+              "ndcg": 0.969,
+              "within_3": 63.257,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 41.667,
+              "podium_acc": 12.5,
+              "spearman": 0.752,
+              "mae": 2.908,
+              "ndcg": 0.974,
+              "within_3": 64.092,
+              "races": 24
+            }
+          }
+        ]
+      },
+      {
+        "features": [
+          "grid",
+          "quali_pos",
+          "constructor_momentum",
+          "driver_finish_rate",
+          "starting_compound"
+        ],
+        "winner_acc": 50.0,
+        "podium_acc": 20.581,
+        "spearman": 0.662,
+        "mae": 3.261,
+        "ndcg": 0.964,
+        "within_3": 58.151,
+        "years": [
+          2022,
+          2023,
+          2024
+        ],
+        "per_year": [
+          {
+            "test_year": 2022,
+            "baseline": {
+              "winner_acc": 40.909,
+              "podium_acc": 18.182,
+              "spearman": 0.6,
+              "mae": 3.487,
+              "ndcg": 0.959,
+              "within_3": 53.864,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 36.364,
+              "podium_acc": 22.727,
+              "spearman": 0.594,
+              "mae": 3.491,
+              "ndcg": 0.952,
+              "within_3": 54.091,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2023,
+            "baseline": {
+              "winner_acc": 68.182,
+              "podium_acc": 13.636,
+              "spearman": 0.624,
+              "mae": 3.537,
+              "ndcg": 0.969,
+              "within_3": 52.955,
+              "races": 22
+            },
+            "xgboost": {
+              "winner_acc": 63.636,
+              "podium_acc": 18.182,
+              "spearman": 0.63,
+              "mae": 3.434,
+              "ndcg": 0.968,
+              "within_3": 55.227,
+              "races": 22
+            }
+          },
+          {
+            "test_year": 2024,
+            "baseline": {
+              "winner_acc": 50.0,
+              "podium_acc": 16.667,
+              "spearman": 0.764,
+              "mae": 2.885,
+              "ndcg": 0.972,
+              "within_3": 61.378,
+              "races": 24
+            },
+            "xgboost": {
+              "winner_acc": 50.0,
+              "podium_acc": 20.833,
+              "spearman": 0.762,
+              "mae": 2.859,
+              "ndcg": 0.972,
+              "within_3": 65.136,
+              "races": 24
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "feature_importance_by_metric": {
+    "winner_acc": [
+      {
+        "feature": "quali_gap",
+        "avg_winner_acc": 54.545,
+        "n_sets": 1
+      },
+      {
+        "feature": "constructor_rank_norm",
+        "avg_winner_acc": 52.399,
+        "n_sets": 2
+      },
+      {
+        "feature": "driver_form",
+        "avg_winner_acc": 51.642,
+        "n_sets": 2
+      },
+      {
+        "feature": "team_win_rate",
+        "avg_winner_acc": 51.137,
+        "n_sets": 3
+      },
+      {
+        "feature": "circuit_avg_finish",
+        "avg_winner_acc": 50.547,
+        "n_sets": 3
+      },
+      {
+        "feature": "grid_penalty",
+        "avg_winner_acc": 50.253,
+        "n_sets": 4
+      },
+      {
+        "feature": "circuit_overperformance",
+        "avg_winner_acc": 49.874,
+        "n_sets": 5
+      },
+      {
+        "feature": "constructor_momentum",
+        "avg_winner_acc": 49.849,
+        "n_sets": 5
+      },
+      {
+        "feature": "circuit_wins_before",
+        "avg_winner_acc": 49.306,
+        "n_sets": 2
+      },
+      {
+        "feature": "starting_compound",
+        "avg_winner_acc": 48.674,
+        "n_sets": 2
+      },
+      {
+        "feature": "driver_finish_rate",
+        "avg_winner_acc": 48.643,
+        "n_sets": 4
+      },
+      {
+        "feature": "track_temp",
+        "avg_winner_acc": 48.549,
+        "n_sets": 2
+      },
+      {
+        "feature": "team_encoded",
+        "avg_winner_acc": 48.485,
+        "n_sets": 1
+      },
+      {
+        "feature": "circuit_type",
+        "avg_winner_acc": 48.359,
+        "n_sets": 1
+      },
+      {
+        "feature": "circuit_encoded",
+        "avg_winner_acc": 48.149,
+        "n_sets": 3
+      },
+      {
+        "feature": "wet_race",
+        "avg_winner_acc": 47.349,
+        "n_sets": 1
+      }
+    ],
+    "spearman": [
+      {
+        "feature": "quali_gap",
+        "avg_spearman": 0.673,
+        "n_sets": 1
+      },
+      {
+        "feature": "driver_form",
+        "avg_spearman": 0.671,
+        "n_sets": 2
+      },
+      {
+        "feature": "constructor_rank_norm",
+        "avg_spearman": 0.669,
+        "n_sets": 2
+      },
+      {
+        "feature": "team_encoded",
+        "avg_spearman": 0.669,
+        "n_sets": 1
+      },
+      {
+        "feature": "circuit_overperformance",
+        "avg_spearman": 0.667,
+        "n_sets": 5
+      },
+      {
+        "feature": "driver_finish_rate",
+        "avg_spearman": 0.665,
+        "n_sets": 4
+      },
+      {
+        "feature": "team_win_rate",
+        "avg_spearman": 0.664,
+        "n_sets": 3
+      },
+      {
+        "feature": "grid_penalty",
+        "avg_spearman": 0.663,
+        "n_sets": 4
+      },
+      {
+        "feature": "circuit_avg_finish",
+        "avg_spearman": 0.663,
+        "n_sets": 3
+      },
+      {
+        "feature": "constructor_momentum",
+        "avg_spearman": 0.663,
+        "n_sets": 5
+      },
+      {
+        "feature": "starting_compound",
+        "avg_spearman": 0.661,
+        "n_sets": 2
+      },
+      {
+        "feature": "wet_race",
+        "avg_spearman": 0.659,
+        "n_sets": 1
+      },
+      {
+        "feature": "track_temp",
+        "avg_spearman": 0.659,
+        "n_sets": 2
+      },
+      {
+        "feature": "circuit_encoded",
+        "avg_spearman": 0.659,
+        "n_sets": 3
+      },
+      {
+        "feature": "circuit_wins_before",
+        "avg_spearman": 0.657,
+        "n_sets": 2
+      },
+      {
+        "feature": "circuit_type",
+        "avg_spearman": 0.648,
+        "n_sets": 1
+      }
+    ],
+    "mae": [
+      {
+        "feature": "constructor_rank_norm",
+        "avg_mae": 3.215,
+        "n_sets": 2
+      },
+      {
+        "feature": "quali_gap",
+        "avg_mae": 3.217,
+        "n_sets": 1
+      },
+      {
+        "feature": "driver_form",
+        "avg_mae": 3.221,
+        "n_sets": 2
+      },
+      {
+        "feature": "team_encoded",
+        "avg_mae": 3.223,
+        "n_sets": 1
+      },
+      {
+        "feature": "circuit_overperformance",
+        "avg_mae": 3.23,
+        "n_sets": 5
+      },
+      {
+        "feature": "team_win_rate",
+        "avg_mae": 3.238,
+        "n_sets": 3
+      },
+      {
+        "feature": "driver_finish_rate",
+        "avg_mae": 3.245,
+        "n_sets": 4
+      },
+      {
+        "feature": "grid_penalty",
+        "avg_mae": 3.247,
+        "n_sets": 4
+      },
+      {
+        "feature": "constructor_momentum",
+        "avg_mae": 3.252,
+        "n_sets": 5
+      },
+      {
+        "feature": "starting_compound",
+        "avg_mae": 3.266,
+        "n_sets": 2
+      },
+      {
+        "feature": "wet_race",
+        "avg_mae": 3.27,
+        "n_sets": 1
+      },
+      {
+        "feature": "circuit_avg_finish",
+        "avg_mae": 3.275,
+        "n_sets": 3
+      },
+      {
+        "feature": "circuit_encoded",
+        "avg_mae": 3.292,
+        "n_sets": 3
+      },
+      {
+        "feature": "circuit_wins_before",
+        "avg_mae": 3.297,
+        "n_sets": 2
+      },
+      {
+        "feature": "track_temp",
+        "avg_mae": 3.303,
+        "n_sets": 2
+      },
+      {
+        "feature": "circuit_type",
+        "avg_mae": 3.381,
+        "n_sets": 1
+      }
+    ]
+  },
+  "all_results": [
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "constructor_momentum",
+        "grid_penalty",
+        "team_win_rate"
+      ],
+      "winner_acc": 54.672,
+      "podium_acc": 19.192,
+      "spearman": 0.657,
+      "mae": 3.279,
+      "ndcg": 0.966,
+      "within_3": 56.937,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 13.636,
+            "spearman": 0.593,
+            "mae": 3.488,
+            "ndcg": 0.969,
+            "within_3": 53.636,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 40.909,
+            "podium_acc": 18.182,
+            "spearman": 0.589,
+            "mae": 3.498,
+            "ndcg": 0.957,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 90.909,
+            "podium_acc": 18.182,
+            "spearman": 0.636,
+            "mae": 3.371,
+            "ndcg": 0.975,
+            "within_3": 53.182,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 77.273,
+            "podium_acc": 22.727,
+            "spearman": 0.633,
+            "mae": 3.415,
+            "ndcg": 0.976,
+            "within_3": 53.864,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 37.5,
+            "podium_acc": 16.667,
+            "spearman": 0.752,
+            "mae": 2.966,
+            "ndcg": 0.966,
+            "within_3": 59.499,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 45.833,
+            "podium_acc": 16.667,
+            "spearman": 0.749,
+            "mae": 2.923,
+            "ndcg": 0.966,
+            "within_3": 62.63,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_avg_finish",
+        "circuit_overperformance",
+        "constructor_rank_norm",
+        "driver_form",
+        "quali_gap"
+      ],
+      "winner_acc": 54.545,
+      "podium_acc": 21.97,
+      "spearman": 0.673,
+      "mae": 3.217,
+      "ndcg": 0.969,
+      "within_3": 58.131,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 59.091,
+            "podium_acc": 36.364,
+            "spearman": 0.617,
+            "mae": 3.455,
+            "ndcg": 0.969,
+            "within_3": 54.545,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 40.909,
+            "podium_acc": 27.273,
+            "spearman": 0.61,
+            "mae": 3.451,
+            "ndcg": 0.962,
+            "within_3": 56.591,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 86.364,
+            "podium_acc": 18.182,
+            "spearman": 0.661,
+            "mae": 3.303,
+            "ndcg": 0.975,
+            "within_3": 54.545,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 72.727,
+            "podium_acc": 13.636,
+            "spearman": 0.654,
+            "mae": 3.302,
+            "ndcg": 0.973,
+            "within_3": 54.545,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 25.0,
+            "spearman": 0.759,
+            "mae": 2.877,
+            "ndcg": 0.97,
+            "within_3": 64.092,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 50.0,
+            "podium_acc": 25.0,
+            "spearman": 0.755,
+            "mae": 2.897,
+            "ndcg": 0.971,
+            "within_3": 63.257,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_overperformance",
+        "circuit_wins_before",
+        "constructor_rank_norm",
+        "grid_penalty",
+        "team_win_rate"
+      ],
+      "winner_acc": 50.253,
+      "podium_acc": 21.97,
+      "spearman": 0.666,
+      "mae": 3.213,
+      "ndcg": 0.97,
+      "within_3": 58.162,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 27.273,
+            "spearman": 0.611,
+            "mae": 3.415,
+            "ndcg": 0.971,
+            "within_3": 56.591,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.596,
+            "mae": 3.495,
+            "ndcg": 0.961,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 81.818,
+            "podium_acc": 18.182,
+            "spearman": 0.665,
+            "mae": 3.203,
+            "ndcg": 0.977,
+            "within_3": 57.727,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 72.727,
+            "podium_acc": 18.182,
+            "spearman": 0.659,
+            "mae": 3.255,
+            "ndcg": 0.976,
+            "within_3": 57.955,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 33.333,
+            "podium_acc": 20.833,
+            "spearman": 0.753,
+            "mae": 2.916,
+            "ndcg": 0.967,
+            "within_3": 62.422,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 41.667,
+            "podium_acc": 25.0,
+            "spearman": 0.743,
+            "mae": 2.889,
+            "ndcg": 0.974,
+            "within_3": 62.213,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "constructor_momentum",
+        "driver_finish_rate",
+        "starting_compound"
+      ],
+      "winner_acc": 50.0,
+      "podium_acc": 20.581,
+      "spearman": 0.662,
+      "mae": 3.261,
+      "ndcg": 0.964,
+      "within_3": 58.151,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 40.909,
+            "podium_acc": 18.182,
+            "spearman": 0.6,
+            "mae": 3.487,
+            "ndcg": 0.959,
+            "within_3": 53.864,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.594,
+            "mae": 3.491,
+            "ndcg": 0.952,
+            "within_3": 54.091,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 68.182,
+            "podium_acc": 13.636,
+            "spearman": 0.624,
+            "mae": 3.537,
+            "ndcg": 0.969,
+            "within_3": 52.955,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 63.636,
+            "podium_acc": 18.182,
+            "spearman": 0.63,
+            "mae": 3.434,
+            "ndcg": 0.968,
+            "within_3": 55.227,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 16.667,
+            "spearman": 0.764,
+            "mae": 2.885,
+            "ndcg": 0.972,
+            "within_3": 61.378,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 50.0,
+            "podium_acc": 20.833,
+            "spearman": 0.762,
+            "mae": 2.859,
+            "ndcg": 0.972,
+            "within_3": 65.136,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_avg_finish",
+        "circuit_encoded",
+        "circuit_overperformance",
+        "constructor_momentum",
+        "driver_finish_rate",
+        "driver_form",
+        "grid_penalty",
+        "track_temp"
+      ],
+      "winner_acc": 48.738,
+      "podium_acc": 19.318,
+      "spearman": 0.669,
+      "mae": 3.226,
+      "ndcg": 0.969,
+      "within_3": 58.409,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 36.364,
+            "podium_acc": 31.818,
+            "spearman": 0.603,
+            "mae": 3.484,
+            "ndcg": 0.963,
+            "within_3": 54.091,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 27.273,
+            "spearman": 0.607,
+            "mae": 3.446,
+            "ndcg": 0.958,
+            "within_3": 54.545,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 86.364,
+            "podium_acc": 9.091,
+            "spearman": 0.647,
+            "mae": 3.366,
+            "ndcg": 0.975,
+            "within_3": 54.318,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 68.182,
+            "podium_acc": 18.182,
+            "spearman": 0.647,
+            "mae": 3.324,
+            "ndcg": 0.974,
+            "within_3": 56.591,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 58.333,
+            "podium_acc": 20.833,
+            "spearman": 0.767,
+            "mae": 2.821,
+            "ndcg": 0.969,
+            "within_3": 63.257,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 41.667,
+            "podium_acc": 12.5,
+            "spearman": 0.752,
+            "mae": 2.908,
+            "ndcg": 0.974,
+            "within_3": 64.092,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_overperformance",
+        "constructor_momentum",
+        "driver_finish_rate",
+        "team_encoded",
+        "team_win_rate"
+      ],
+      "winner_acc": 48.485,
+      "podium_acc": 20.707,
+      "spearman": 0.669,
+      "mae": 3.223,
+      "ndcg": 0.963,
+      "within_3": 58.289,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 59.091,
+            "podium_acc": 13.636,
+            "spearman": 0.605,
+            "mae": 3.378,
+            "ndcg": 0.969,
+            "within_3": 57.273,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 22.727,
+            "podium_acc": 22.727,
+            "spearman": 0.6,
+            "mae": 3.451,
+            "ndcg": 0.954,
+            "within_3": 55.909,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 86.364,
+            "podium_acc": 27.273,
+            "spearman": 0.649,
+            "mae": 3.325,
+            "ndcg": 0.975,
+            "within_3": 56.364,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 72.727,
+            "podium_acc": 22.727,
+            "spearman": 0.66,
+            "mae": 3.321,
+            "ndcg": 0.975,
+            "within_3": 55.909,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 45.833,
+            "podium_acc": 16.667,
+            "spearman": 0.762,
+            "mae": 2.864,
+            "ndcg": 0.963,
+            "within_3": 63.048,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 50.0,
+            "podium_acc": 16.667,
+            "spearman": 0.746,
+            "mae": 2.897,
+            "ndcg": 0.961,
+            "within_3": 63.048,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_avg_finish",
+        "circuit_encoded",
+        "circuit_type",
+        "circuit_wins_before",
+        "track_temp"
+      ],
+      "winner_acc": 48.359,
+      "podium_acc": 19.192,
+      "spearman": 0.648,
+      "mae": 3.381,
+      "ndcg": 0.97,
+      "within_3": 55.691,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 31.818,
+            "podium_acc": 4.545,
+            "spearman": 0.592,
+            "mae": 3.56,
+            "ndcg": 0.964,
+            "within_3": 53.182,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.589,
+            "mae": 3.535,
+            "ndcg": 0.964,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 54.545,
+            "podium_acc": 9.091,
+            "spearman": 0.606,
+            "mae": 3.534,
+            "ndcg": 0.967,
+            "within_3": 51.364,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 54.545,
+            "podium_acc": 18.182,
+            "spearman": 0.61,
+            "mae": 3.52,
+            "ndcg": 0.97,
+            "within_3": 54.091,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 41.667,
+            "podium_acc": 12.5,
+            "spearman": 0.753,
+            "mae": 3.014,
+            "ndcg": 0.975,
+            "within_3": 58.664,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 54.167,
+            "podium_acc": 16.667,
+            "spearman": 0.746,
+            "mae": 3.087,
+            "ndcg": 0.977,
+            "within_3": 58.664,
+            "races": 24
+          }
+        }
+      ]
+    },
+    {
+      "features": [
+        "grid",
+        "quali_pos",
+        "circuit_encoded",
+        "circuit_overperformance",
+        "constructor_momentum",
+        "driver_finish_rate",
+        "grid_penalty",
+        "starting_compound",
+        "wet_race"
+      ],
+      "winner_acc": 47.349,
+      "podium_acc": 20.581,
+      "spearman": 0.659,
+      "mae": 3.27,
+      "ndcg": 0.97,
+      "within_3": 57.625,
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "per_year": [
+        {
+          "test_year": 2022,
+          "baseline": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.595,
+            "mae": 3.508,
+            "ndcg": 0.959,
+            "within_3": 52.955,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 36.364,
+            "podium_acc": 22.727,
+            "spearman": 0.595,
+            "mae": 3.481,
+            "ndcg": 0.964,
+            "within_3": 54.318,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2023,
+          "baseline": {
+            "winner_acc": 63.636,
+            "podium_acc": 18.182,
+            "spearman": 0.625,
+            "mae": 3.511,
+            "ndcg": 0.973,
+            "within_3": 54.091,
+            "races": 22
+          },
+          "xgboost": {
+            "winner_acc": 68.182,
+            "podium_acc": 18.182,
+            "spearman": 0.629,
+            "mae": 3.442,
+            "ndcg": 0.973,
+            "within_3": 56.136,
+            "races": 22
+          }
+        },
+        {
+          "test_year": 2024,
+          "baseline": {
+            "winner_acc": 50.0,
+            "podium_acc": 20.833,
+            "spearman": 0.762,
+            "mae": 2.873,
+            "ndcg": 0.966,
+            "within_3": 62.422,
+            "races": 24
+          },
+          "xgboost": {
+            "winner_acc": 37.5,
+            "podium_acc": 20.833,
+            "spearman": 0.754,
+            "mae": 2.886,
+            "ndcg": 0.973,
+            "within_3": 62.422,
+            "races": 24
+          }
+        }
+      ]
+    }
+  ]
+}

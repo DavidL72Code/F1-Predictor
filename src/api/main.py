@@ -5,11 +5,15 @@ Notebook-aligned feature pipeline and race prediction endpoints.
 
 import json
 import os
+import time
+from collections import defaultdict, deque
+from functools import lru_cache
 
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from scipy.stats import spearmanr
 from sklearn.linear_model import Ridge
@@ -17,8 +21,24 @@ from sklearn.metrics import mean_absolute_error, ndcg_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from xgboost import XGBRegressor
 
+def _load_allowed_origins():
+    configured = os.getenv("ALLOWED_ORIGINS", "")
+    origins = [origin.strip() for origin in configured.split(",") if origin.strip()]
+    if origins:
+        return origins
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
 app = FastAPI(title="F1 Strategy Predictor API")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_load_allowed_origins(),
+    allow_methods=["GET", "HEAD", "OPTIONS"],
+    allow_headers=["Accept", "Content-Type"],
+)
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(BASE, "../..")
@@ -28,15 +48,60 @@ FEATURE_SEARCH_RESULTS = os.path.join(DATA, "processed", "feature_search_results
 FEATURE_SEARCH_PROFILE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_summary.json")
 FEATURE_SEARCH_PROFILE_LIVE_SUMMARY = os.path.join(DATA, "processed", "feature_search_profile_live_summary.json")
 DEFAULT_PROFILE = "winner"
-CURRENT_SEASON_WEIGHT = 10.0
+# Sample weight applied to the current season when fitting the live models.
+#
+# Was 10.0. Walk-forward evaluation over 2019-2026 showed that upweighting is a
+# net negative: it barely moves Ridge (+0.0026 Spearman going 10 -> 1) but
+# badly hurts XGBoost (+0.0088), because skewed sample weights shrink the
+# effective sample a tree model sees. The blend then had a degraded partner to
+# work with, which was masking most of the ensemble's value.
+#
+# w=1 scored best in 7 of 8 seasons — including 2022, the ground-effect reset
+# this weighting was introduced to survive. Adaptation to a new season comes
+# from refitting on every prior round, not from overweighting recent rows.
+CURRENT_SEASON_WEIGHT = 1.0
 PREVIOUS_SEASON_WEIGHT = 3.0
 TWO_SEASONS_BACK_WEIGHT = 1.0
+RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "45"))
+# Number of proxies in front of this service whose X-Forwarded-For entries can
+# be trusted. See _client_ip. Default 1 = one platform load balancer.
+TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "1"))
+# "/races/" (with the slash) missed "/races" itself, which is the most
+# expensive uncached endpoint here — a groupby plus iterrows over every row on
+# each call. Dropping the slash covers both the list and the per-race route.
+RATE_LIMITED_PATH_PREFIXES = ("/races", "/model/stats", "/analytics")
+_rate_limit_buckets = defaultdict(deque)
+
+# Buckets were created per client key and never removed, so the dict grew for
+# the life of the process — one entry per distinct caller, forever. Sweep the
+# ones whose window has fully expired.
+RATE_LIMIT_SWEEP_EVERY = 500
+RATE_LIMIT_MAX_BUCKETS = 10_000
+_rate_limit_requests_seen = 0
+
+
+def _sweep_rate_limit_buckets(now):
+    cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+    for key in [k for k, b in _rate_limit_buckets.items() if not b or b[-1] <= cutoff]:
+        del _rate_limit_buckets[key]
+    # Hard ceiling in case sweeping cannot keep up with a flood of distinct keys.
+    if len(_rate_limit_buckets) > RATE_LIMIT_MAX_BUCKETS:
+        for key in sorted(_rate_limit_buckets, key=lambda k: _rate_limit_buckets[k][-1])[
+            : len(_rate_limit_buckets) - RATE_LIMIT_MAX_BUCKETS
+        ]:
+            del _rate_limit_buckets[key]
 
 PROFILE_METADATA = {
     "winner": {
         "label": "Winner-Centric",
         "description": "Optimized to pick P1 as often as possible.",
         "objective_metric": "winner_acc",
+        # Which method goes live is decided on this metric, from the honest
+        # walk-forward benchmark. Separate from objective_metric, which drives
+        # feature selection and is left alone here.
+        "method_metric": "winner_acc",
+        "method_better": "high",
         "alpha_key": "best_alpha_winner",
         "default_alpha": 0.2,
     },
@@ -44,6 +109,10 @@ PROFILE_METADATA = {
         "label": "Full Finishing Order",
         "description": "Optimized for the strongest full-grid ranking quality.",
         "objective_metric": "spearman",
+        # Full-grid ordering is judged on positional error first; Spearman is
+        # reported alongside as the sanity check.
+        "method_metric": "mae",
+        "method_better": "low",
         "alpha_key": "best_alpha_position",
         "default_alpha": 0.5,
     },
@@ -149,6 +218,81 @@ F1_2026_CIRCUITS = [
 
 def _read_csv(path):
     return pd.read_csv(path) if os.path.exists(path) else None
+
+
+def _client_ip(request: Request):
+    """Client IP for rate limiting, resistant to a forged X-Forwarded-For.
+
+    X-Forwarded-For is `client, proxy1, proxy2 …`, where each hop appends the
+    address it received the request from. Only the entries appended by proxies
+    YOU control are trustworthy — everything to their left can be written by
+    the caller. Taking [0], as this did, meant any client could send
+    `X-Forwarded-For: <anything>` and get a fresh bucket, which made the rate
+    limit bypassable and let the bucket dict grow without bound.
+
+    So count in from the right by the number of proxies actually in front of
+    this service. TRUSTED_PROXY_COUNT=1 suits a single platform load balancer
+    (Render, Fly, a lone nginx); use 0 when the app is reachable directly, and
+    raise it if you add another hop such as Cloudflare in front of Render.
+    """
+    if TRUSTED_PROXY_COUNT > 0:
+        forwarded_for = request.headers.get("x-forwarded-for", "")
+        if forwarded_for:
+            hops = [hop.strip() for hop in forwarded_for.split(",") if hop.strip()]
+            if hops:
+                # index -TRUSTED_PROXY_COUNT is the address the outermost proxy
+                # we trust actually observed; clamp when fewer hops arrive.
+                return hops[max(0, len(hops) - TRUSTED_PROXY_COUNT)]
+    return getattr(request.client, "host", "unknown")
+
+
+def _rate_limit_key(request: Request):
+    path = request.url.path
+    # Matches RATE_LIMITED_PATH_PREFIXES, so the race list and the per-race
+    # route share one budget rather than getting 45 requests each.
+    if path.startswith("/races"):
+        return "races"
+    if path.startswith("/model/stats"):
+        return "model_stats"
+    if path.startswith("/analytics"):
+        return "analytics"
+    return path
+
+
+@app.middleware("http")
+async def add_security_headers_and_rate_limit(request: Request, call_next):
+    path = request.url.path
+    if request.method in {"GET", "HEAD"} and path.startswith(RATE_LIMITED_PATH_PREFIXES):
+        key = (_client_ip(request), _rate_limit_key(request))
+        now = time.time()
+
+        global _rate_limit_requests_seen
+        _rate_limit_requests_seen += 1
+        if _rate_limit_requests_seen % RATE_LIMIT_SWEEP_EVERY == 0:
+            _sweep_rate_limit_buckets(now)
+
+        bucket = _rate_limit_buckets[key]
+        cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+        while bucket and bucket[0] <= cutoff:
+            bucket.popleft()
+
+        if len(bucket) >= RATE_LIMIT_MAX_REQUESTS:
+            retry_after = max(1, int(bucket[0] + RATE_LIMIT_WINDOW_SECONDS - now))
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Please retry shortly."},
+                headers={"Retry-After": str(retry_after)},
+            )
+
+        bucket.append(now)
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 print("Loading CSVs...")
@@ -614,6 +758,13 @@ def get_profile_runtime(profile):
 
 
 def get_historical_alpha(year, profile_runtime):
+    # Same rule as the live path. Replaying a past race used to look up the
+    # alpha that was tuned ON that race's own results, so the accuracy shown
+    # for it was optimistic. The live method/alpha has no such knowledge.
+    _, alpha, _ = resolve_live_method(profile_runtime)
+    if alpha is not None:
+        return alpha
+
     benchmark = profile_runtime.get("feature_search_benchmark")
     alpha_key = profile_runtime["alpha_key"]
     default_alpha = float(profile_runtime["default_alpha"])
@@ -630,7 +781,77 @@ def get_historical_alpha(year, profile_runtime):
     return default_alpha
 
 
+_WALK_FORWARD_CACHE = {}
+
+# A method choice IS an alpha choice: alpha=1 is pure Ridge, alpha=0 is pure
+# XGBoost, anything between is the blend.
+_METHOD_ALPHA = {"ridge_only": 1.0, "xgboost_only": 0.0}
+
+
+def _load_walk_forward():
+    """Cache on mtime, not forever.
+
+    The scheduled job rewrites this file whenever a new race lands, and it can
+    change which method goes live. Keying the cache on mtime means the change
+    takes effect on the next request instead of waiting for a restart.
+    """
+    path = os.path.join(DATA, "processed", "alpha_schedule.json")
+    try:
+        stamp = os.path.getmtime(path)
+    except OSError:
+        _WALK_FORWARD_CACHE["data"] = None
+        return None
+
+    if _WALK_FORWARD_CACHE.get("mtime") != stamp:
+        try:
+            with open(path) as handle:
+                _WALK_FORWARD_CACHE["data"] = json.load(handle)
+            _WALK_FORWARD_CACHE["mtime"] = stamp
+        except (OSError, json.JSONDecodeError):
+            _WALK_FORWARD_CACHE["data"] = None
+    return _WALK_FORWARD_CACHE["data"]
+
+
+def resolve_live_method(profile_runtime):
+    """Pick the method that actually wins this profile's metric, and its alpha.
+
+    Previously `selected_method` was metadata only — the prediction path blended
+    unconditionally, so the winner profile shipped an ensemble that scored worse
+    on winner accuracy than plain Ridge. This makes the label binding, and reads
+    it from the walk-forward benchmark rather than the leaky one.
+    """
+    data = _load_walk_forward()
+    profile_key = profile_runtime.get("profile")
+    meta = PROFILE_METADATA.get(profile_key, {})
+    metric = meta.get("method_metric")
+    better = meta.get("method_better", "high")
+
+    entry = ((data or {}).get("profiles") or {}).get(profile_key)
+    rows = (entry or {}).get("walk_forward_benchmark") or []
+    if not rows or not metric:
+        return None, None, None
+
+    means = {}
+    for method in ("ridge_only", "xgboost_only", "walk_forward"):
+        vals = [r[method][metric] for r in rows if r.get(method) and r[method].get(metric) is not None]
+        if vals:
+            means[method] = sum(vals) / len(vals)
+    if not means:
+        return None, None, None
+
+    winner = (min if better == "low" else max)(means, key=means.get)
+    alpha = _METHOD_ALPHA.get(winner, float(entry.get("prior_alpha", 0.5)))
+    return winner, float(alpha), means
+
+
 def get_future_alpha(profile_runtime):
+    # Honest benchmark first: it decides both the method and, when that method
+    # is the blend, the weight. Falls back to the old averaging only when
+    # alpha_schedule.json is absent (run scripts/tune_alpha.py).
+    _, alpha, _ = resolve_live_method(profile_runtime)
+    if alpha is not None:
+        return alpha
+
     benchmark = profile_runtime.get("feature_search_benchmark")
     alpha_key = profile_runtime["alpha_key"]
     default_alpha = float(profile_runtime["default_alpha"])
@@ -881,6 +1102,16 @@ def predict_future_2026(circuit_id, profile=DEFAULT_PROFILE):
     return make_results(rows, preds, win_probs, None), best_alpha
 
 
+@lru_cache(maxsize=256)
+def get_cached_historical_prediction(year: int, round_number: int, profile: str):
+    return predict_historical(year, round_number, profile)
+
+
+@lru_cache(maxsize=64)
+def get_cached_future_prediction(circuit_id: str, profile: str):
+    return predict_future_2026(circuit_id, profile)
+
+
 @app.get("/")
 def root():
     return {
@@ -959,7 +1190,7 @@ def get_race(year: int, round_number: int, profile: str = DEFAULT_PROFILE):
         circuit = future_race["circuit"]
         completed = df[(df["year"] == 2026) & (df["round"] == round_number)]
         if completed.empty:
-            results, alpha = predict_future_2026(circuit, profile=profile)
+            results, alpha = get_cached_future_prediction(circuit, profile)
             return {
                 "year": year,
                 "round": round_number,
@@ -977,7 +1208,7 @@ def get_race(year: int, round_number: int, profile: str = DEFAULT_PROFILE):
                 ),
             }
 
-    results, accuracy = predict_historical(year, round_number, profile=profile)
+    results, accuracy = get_cached_historical_prediction(year, round_number, profile)
     race = df[(df["year"] == year) & (df["round"] == round_number)].iloc[0]
     return {
         "year": year,
@@ -1009,6 +1240,30 @@ def get_analytics():
     return analytics_data
 
 
+_METHOD_LABELS = {"ridge_only": "baseline", "xgboost_only": "xgboost", "walk_forward": "ensemble"}
+
+
+def _live_method_label(profile_runtime):
+    method, _, _ = resolve_live_method(profile_runtime)
+    return _METHOD_LABELS.get(method) or profile_runtime.get("selected_method", "")
+
+
+@app.get("/analytics/walk-forward")
+def get_walk_forward():
+    """Honest benchmark: alpha fitted only on rounds before the race being scored.
+
+    The /analytics figures pick alpha by maximising a metric on the test year and
+    then report that same year, so the ensemble mathematically cannot lose to
+    either base model (alpha=1 is Ridge, alpha=0 is XGBoost). These numbers come
+    from scripts/tune_alpha.py and are what the deployed model actually does.
+    """
+    path = os.path.join(DATA, "processed", "alpha_schedule.json")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Run scripts/tune_alpha.py first")
+    with open(path) as handle:
+        return json.load(handle)
+
+
 @app.get("/model/stats")
 def model_stats(profile: str = DEFAULT_PROFILE):
     profile_runtime = get_profile_runtime(profile)
@@ -1019,7 +1274,7 @@ def model_stats(profile: str = DEFAULT_PROFILE):
         "profile_description": profile_runtime["description"],
         "objective_metric": profile_runtime["objective_metric"],
         "objective_value": profile_runtime["objective_value"],
-        "selected_method": profile_runtime["selected_method"],
+        "selected_method": _live_method_label(profile_runtime),
         "features": profile_runtime["features"],
         "all_metrics": profile_runtime["all_metrics"],
         "feature_search_source": profile_runtime["source"],
