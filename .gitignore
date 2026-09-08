@@ -28,7 +28,12 @@ frontend/node_modules/
 frontend/build/
 .vercel/
 
-# Local FastF1 cache
+# FastF1 caches. Regenerable, and huge — the copy under fastf1_cache/ was being
+# rewritten and committed on every scheduled run (~31MB of fresh binary each
+# time, 34 commits' worth) because the pattern below is anchored to data/raw and
+# missed the nested path.
+data/raw/fastf1_cache/
+data/raw/**/fastf1_http_cache.sqlite
 data/raw/fastf1_http_cache.sqlite
 data/raw/**/*.ff1pkl
 
