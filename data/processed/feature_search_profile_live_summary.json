@@ -11243,22 +11243,22 @@
       "winner_acc": [
         {
           "feature": "quali_gap",
-          "avg_winner_acc": 61.706,
+          "avg_winner_acc": 61.687,
           "n_sets": 80
         },
         {
           "feature": "circuit_overperformance",
-          "avg_winner_acc": 61.331,
+          "avg_winner_acc": 61.312,
           "n_sets": 80
         },
         {
           "feature": "grid_penalty",
-          "avg_winner_acc": 61.296,
+          "avg_winner_acc": 61.277,
           "n_sets": 80
         },
         {
           "feature": "wet_race",
-          "avg_winner_acc": 61.267,
+          "avg_winner_acc": 61.249,
           "n_sets": 80
         },
         {
@@ -11273,7 +11273,7 @@
         },
         {
           "feature": "driver_form",
-          "avg_winner_acc": 59.387,
+          "avg_winner_acc": 59.376,
           "n_sets": 142
         },
         {
@@ -11283,22 +11283,22 @@
         },
         {
           "feature": "track_temp",
-          "avg_winner_acc": 59.206,
+          "avg_winner_acc": 59.195,
           "n_sets": 142
         },
         {
           "feature": "circuit_avg_finish",
-          "avg_winner_acc": 59.162,
+          "avg_winner_acc": 59.151,
           "n_sets": 142
         },
         {
           "feature": "team_encoded",
-          "avg_winner_acc": 58.97,
+          "avg_winner_acc": 58.959,
           "n_sets": 142
         },
         {
           "feature": "driver_finish_rate",
-          "avg_winner_acc": 58.86,
+          "avg_winner_acc": 58.775,
           "n_sets": 18
         },
         {
@@ -11335,7 +11335,7 @@
         },
         {
           "feature": "driver_finish_rate",
-          "avg_podium_acc": 22.671,
+          "avg_podium_acc": 22.755,
           "n_sets": 18
         },
         {
@@ -11350,32 +11350,32 @@
         },
         {
           "feature": "circuit_avg_finish",
-          "avg_podium_acc": 22.371,
+          "avg_podium_acc": 22.381,
           "n_sets": 142
         },
         {
           "feature": "driver_form",
-          "avg_podium_acc": 22.356,
+          "avg_podium_acc": 22.366,
           "n_sets": 142
         },
         {
           "feature": "team_encoded",
-          "avg_podium_acc": 22.233,
+          "avg_podium_acc": 22.244,
           "n_sets": 142
         },
         {
           "feature": "track_temp",
-          "avg_podium_acc": 22.115,
+          "avg_podium_acc": 22.125,
           "n_sets": 142
         },
         {
           "feature": "grid_penalty",
-          "avg_podium_acc": 21.937,
+          "avg_podium_acc": 21.956,
           "n_sets": 80
         },
         {
           "feature": "circuit_overperformance",
-          "avg_podium_acc": 21.933,
+          "avg_podium_acc": 21.952,
           "n_sets": 80
         },
         {
@@ -11385,12 +11385,12 @@
         },
         {
           "feature": "wet_race",
-          "avg_podium_acc": 21.821,
+          "avg_podium_acc": 21.84,
           "n_sets": 80
         },
         {
           "feature": "quali_gap",
-          "avg_podium_acc": 21.653,
+          "avg_podium_acc": 21.671,
           "n_sets": 80
         },
         {
@@ -17999,7 +17999,7 @@
           "spearman": 0.674,
           "mae": 3.232,
           "ndcg": 0.968,
-          "within_3": 57.746
+          "within_3": 57.822
         }
       },
       "per_year": [
@@ -18042,7 +18042,7 @@
               "spearman": 0.61,
               "mae": 3.458,
               "ndcg": 0.961,
-              "within_3": 55.227,
+              "within_3": 55.455,
               "races": 22
             }
           }
@@ -20441,12 +20441,12 @@
           "within_3": 58.182
         },
         "ensemble_position": {
-          "winner_acc": 63.258,
-          "podium_acc": 20.707,
+          "winner_acc": 61.743,
+          "podium_acc": 22.222,
           "spearman": 0.674,
-          "mae": 3.214,
-          "ndcg": 0.967,
-          "within_3": 58.352
+          "mae": 3.215,
+          "ndcg": 0.968,
+          "within_3": 58.428
         }
       },
       "per_year": [
@@ -20454,7 +20454,7 @@
           "test_year": 2022,
           "train_until": 2021,
           "best_alpha_winner": 0.4,
-          "best_alpha_position": 0.5,
+          "best_alpha_position": 0.7,
           "methods": {
             "baseline": {
               "winner_acc": 36.364,
@@ -20484,12 +20484,12 @@
               "races": 22
             },
             "ensemble_position": {
-              "winner_acc": 50.0,
-              "podium_acc": 27.273,
+              "winner_acc": 45.455,
+              "podium_acc": 31.818,
               "spearman": 0.605,
-              "mae": 3.457,
-              "ndcg": 0.958,
-              "within_3": 55.227,
+              "mae": 3.462,
+              "ndcg": 0.96,
+              "within_3": 55.455,
               "races": 22
             }
           }
@@ -25709,7 +25709,7 @@
           "spearman": 0.677,
           "mae": 3.176,
           "ndcg": 0.971,
-          "within_3": 58.277
+          "within_3": 58.352
         }
       },
       "per_year": [
@@ -25752,7 +25752,7 @@
               "spearman": 0.608,
               "mae": 3.409,
               "ndcg": 0.966,
-              "within_3": 55.909,
+              "within_3": 56.136,
               "races": 22
             }
           }
