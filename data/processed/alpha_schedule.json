@@ -29,7 +29,7 @@
           "tied_grid_points": 1
         }
       },
-      "next_race_alpha": 0.3375,
+      "next_race_alpha": 0.334,
       "schedule": [
         {
           "round": 1,
@@ -143,6 +143,12 @@
           "round": 19,
           "rounds_of_evidence": 18,
           "alpha": 0.3375,
+          "in_season_alpha": 0.25
+        },
+        {
+          "round": 20,
+          "rounds_of_evidence": 19,
+          "alpha": 0.334,
           "in_season_alpha": 0.25
         }
       ],
@@ -423,40 +429,40 @@
         {
           "year": 2026,
           "walk_forward": {
-            "spearman": 0.7046,
-            "mae": 3.406,
-            "ndcg": 0.9696,
-            "within_3": 58.6,
-            "winner_acc": 73.68,
-            "podium_acc": 26.32,
-            "races": 19
+            "spearman": 0.705,
+            "mae": 3.432,
+            "ndcg": 0.9695,
+            "within_3": 57.93,
+            "winner_acc": 70.0,
+            "podium_acc": 25.0,
+            "races": 20
           },
           "ridge_only": {
-            "spearman": 0.6984,
-            "mae": 3.401,
-            "ndcg": 0.9631,
-            "within_3": 54.72,
-            "winner_acc": 57.89,
-            "podium_acc": 15.79,
-            "races": 19
+            "spearman": 0.7041,
+            "mae": 3.383,
+            "ndcg": 0.9637,
+            "within_3": 54.71,
+            "winner_acc": 55.0,
+            "podium_acc": 15.0,
+            "races": 20
           },
           "xgboost_only": {
-            "spearman": 0.7031,
-            "mae": 3.431,
-            "ndcg": 0.9656,
-            "within_3": 57.87,
-            "winner_acc": 73.68,
-            "podium_acc": 26.32,
-            "races": 19
+            "spearman": 0.6976,
+            "mae": 3.489,
+            "ndcg": 0.9653,
+            "within_3": 56.78,
+            "winner_acc": 70.0,
+            "podium_acc": 25.0,
+            "races": 20
           },
           "fixed_prior": {
-            "spearman": 0.7035,
+            "spearman": 0.7062,
             "mae": 3.396,
-            "ndcg": 0.9674,
-            "within_3": 57.38,
-            "winner_acc": 63.16,
-            "podium_acc": 26.32,
-            "races": 19
+            "ndcg": 0.9676,
+            "within_3": 57.24,
+            "winner_acc": 60.0,
+            "podium_acc": 25.0,
+            "races": 20
           }
         }
       ]
@@ -486,7 +492,7 @@
           "tied_grid_points": 1
         }
       },
-      "next_race_alpha": 0.425,
+      "next_race_alpha": 0.576,
       "schedule": [
         {
           "round": 1,
@@ -503,8 +509,8 @@
         {
           "round": 3,
           "rounds_of_evidence": 2,
-          "alpha": 0.5375,
-          "in_season_alpha": 0.65
+          "alpha": 0.4938,
+          "in_season_alpha": 0.475
         },
         {
           "round": 4,
@@ -515,20 +521,20 @@
         {
           "round": 5,
           "rounds_of_evidence": 4,
-          "alpha": 0.37,
-          "in_season_alpha": 0.175
+          "alpha": 0.5,
+          "in_season_alpha": 0.5
         },
         {
           "round": 6,
           "rounds_of_evidence": 5,
-          "alpha": 0.3636,
-          "in_season_alpha": 0.2
+          "alpha": 0.4091,
+          "in_season_alpha": 0.3
         },
         {
           "round": 7,
           "rounds_of_evidence": 6,
-          "alpha": 0.55,
-          "in_season_alpha": 0.6
+          "alpha": 0.4,
+          "in_season_alpha": 0.3
         },
         {
           "round": 8,
@@ -539,20 +545,20 @@
         {
           "round": 9,
           "rounds_of_evidence": 8,
-          "alpha": 0.4714,
-          "in_season_alpha": 0.45
+          "alpha": 0.4429,
+          "in_season_alpha": 0.4
         },
         {
           "round": 10,
           "rounds_of_evidence": 9,
-          "alpha": 0.47,
-          "in_season_alpha": 0.45
+          "alpha": 0.29,
+          "in_season_alpha": 0.15
         },
         {
           "round": 11,
           "rounds_of_evidence": 10,
-          "alpha": 0.4688,
-          "in_season_alpha": 0.45
+          "alpha": 0.4375,
+          "in_season_alpha": 0.4
         },
         {
           "round": 12,
@@ -563,32 +569,32 @@
         {
           "round": 13,
           "rounds_of_evidence": 12,
-          "alpha": 0.4667,
-          "in_season_alpha": 0.45
+          "alpha": 0.4333,
+          "in_season_alpha": 0.4
         },
         {
           "round": 14,
           "rounds_of_evidence": 13,
-          "alpha": 0.4658,
-          "in_season_alpha": 0.45
+          "alpha": 0.4316,
+          "in_season_alpha": 0.4
         },
         {
           "round": 15,
           "rounds_of_evidence": 14,
-          "alpha": 0.465,
-          "in_season_alpha": 0.45
+          "alpha": 0.43,
+          "in_season_alpha": 0.4
         },
         {
           "round": 16,
           "rounds_of_evidence": 15,
-          "alpha": 0.4286,
-          "in_season_alpha": 0.4
+          "alpha": 0.1786,
+          "in_season_alpha": 0.05
         },
         {
           "round": 17,
           "rounds_of_evidence": 16,
-          "alpha": 0.1364,
-          "in_season_alpha": 0.0
+          "alpha": 0.1727,
+          "in_season_alpha": 0.05
         },
         {
           "round": 18,
@@ -599,8 +605,14 @@
         {
           "round": 19,
           "rounds_of_evidence": 18,
-          "alpha": 0.425,
-          "in_season_alpha": 0.4
+          "alpha": 0.1625,
+          "in_season_alpha": 0.05
+        },
+        {
+          "round": 20,
+          "rounds_of_evidence": 19,
+          "alpha": 0.576,
+          "in_season_alpha": 0.6
         }
       ],
       "walk_forward_benchmark": [
@@ -880,40 +892,40 @@
         {
           "year": 2026,
           "walk_forward": {
-            "spearman": 0.7012,
-            "mae": 3.427,
-            "ndcg": 0.9677,
-            "within_3": 56.17,
-            "winner_acc": 57.89,
-            "podium_acc": 26.32,
-            "races": 19
+            "spearman": 0.7059,
+            "mae": 3.422,
+            "ndcg": 0.9682,
+            "within_3": 56.09,
+            "winner_acc": 60.0,
+            "podium_acc": 20.0,
+            "races": 20
           },
           "ridge_only": {
-            "spearman": 0.7015,
-            "mae": 3.391,
-            "ndcg": 0.9668,
-            "within_3": 55.69,
-            "winner_acc": 52.63,
-            "podium_acc": 21.05,
-            "races": 19
+            "spearman": 0.7053,
+            "mae": 3.381,
+            "ndcg": 0.9678,
+            "within_3": 55.86,
+            "winner_acc": 45.0,
+            "podium_acc": 15.0,
+            "races": 20
           },
           "xgboost_only": {
-            "spearman": 0.7007,
-            "mae": 3.474,
-            "ndcg": 0.969,
-            "within_3": 56.17,
-            "winner_acc": 68.42,
-            "podium_acc": 26.32,
-            "races": 19
+            "spearman": 0.6991,
+            "mae": 3.511,
+            "ndcg": 0.9689,
+            "within_3": 54.94,
+            "winner_acc": 70.0,
+            "podium_acc": 20.0,
+            "races": 20
           },
           "fixed_prior": {
-            "spearman": 0.702,
+            "spearman": 0.7055,
             "mae": 3.421,
-            "ndcg": 0.9682,
-            "within_3": 55.93,
-            "winner_acc": 57.89,
-            "podium_acc": 21.05,
-            "races": 19
+            "ndcg": 0.9683,
+            "within_3": 55.63,
+            "winner_acc": 60.0,
+            "podium_acc": 20.0,
+            "races": 20
           }
         }
       ]

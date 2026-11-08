@@ -5115,3 +5115,25 @@ year,round,circuit,driver,team,grid,position,won,points,laps,status
 2026,19,rodriguez,bottas,cadillac,21,20,0,0.0,42,Retired
 2026,19,rodriguez,stroll,aston_martin,19,21,0,0.0,5,Retired
 2026,19,rodriguez,alonso,aston_martin,17,22,0,0.0,5,Retired
+2026,20,interlagos,norris,mclaren,0,1,1,25.0,71,Finished
+2026,20,interlagos,max_verstappen,red_bull,0,2,0,18.0,71,Finished
+2026,20,interlagos,hadjar,red_bull,0,3,0,15.0,71,Finished
+2026,20,interlagos,russell,mercedes,0,4,0,12.0,71,Finished
+2026,20,interlagos,antonelli,mercedes,0,5,0,10.0,71,Finished
+2026,20,interlagos,piastri,mclaren,0,6,0,8.0,71,Finished
+2026,20,interlagos,leclerc,ferrari,0,7,0,6.0,71,Finished
+2026,20,interlagos,lawson,rb,0,8,0,4.0,71,Finished
+2026,20,interlagos,hamilton,ferrari,0,9,0,2.0,70,Lapped
+2026,20,interlagos,hulkenberg,audi,0,10,0,1.0,70,Lapped
+2026,20,interlagos,arvid_lindblad,rb,0,11,0,0.0,70,Lapped
+2026,20,interlagos,alonso,aston_martin,0,12,0,0.0,70,Lapped
+2026,20,interlagos,colapinto,alpine,0,13,0,0.0,70,Lapped
+2026,20,interlagos,gasly,alpine,0,14,0,0.0,70,Lapped
+2026,20,interlagos,albon,williams,0,15,0,0.0,70,Lapped
+2026,20,interlagos,bortoleto,audi,0,16,0,0.0,70,Lapped
+2026,20,interlagos,bearman,haas,0,17,0,0.0,70,Lapped
+2026,20,interlagos,perez,cadillac,0,18,0,0.0,69,Lapped
+2026,20,interlagos,sainz,williams,0,19,0,0.0,69,Lapped
+2026,20,interlagos,rafael_camara,haas,0,20,0,0.0,69,Lapped
+2026,20,interlagos,stroll,aston_martin,0,21,0,0.0,30,Retired
+2026,20,interlagos,bottas,cadillac,0,22,0,0.0,0,Did not start
