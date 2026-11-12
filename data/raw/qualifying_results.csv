@@ -5082,7 +5082,6 @@ year,round,circuit,driver,quali_pos
 2026,19,rodriguez,norris,6
 2026,19,rodriguez,hadjar,7
 2026,19,rodriguez,arvid_lindblad,8
-2026,19,rodriguez,lawson,8
 2026,19,rodriguez,gasly,9
 2026,19,rodriguez,hulkenberg,10
 2026,19,rodriguez,colapinto,11
@@ -5096,6 +5095,7 @@ year,round,circuit,driver,quali_pos
 2026,19,rodriguez,stroll,19
 2026,19,rodriguez,perez,20
 2026,19,rodriguez,bottas,21
+2026,19,rodriguez,lawson,22
 2026,20,interlagos,norris,1
 2026,20,interlagos,russell,2
 2026,20,interlagos,antonelli,3
